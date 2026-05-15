@@ -41,10 +41,11 @@ INSTALLED_APPS = [
     'users',
     'djoser',
     'rest_framework_simplejwt',
-
+    'drf_spectacular',
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -67,6 +68,13 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(hours=10),    # El token para renovar
     'AUTH_HEADER_TYPES': ('Bearer',), 
     'TOKEN_OBTAIN_SERIALIZER': "users.serializers.CustomTokenObtainPairSerializer",              # Para usar "Bearer <token>"
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Tu API',
+    'DESCRIPTION': 'Descripción de la API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 MIDDLEWARE = [

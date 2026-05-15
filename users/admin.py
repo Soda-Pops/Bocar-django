@@ -4,7 +4,7 @@ from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):
     # Aqui editas qué columnas ves en la tabla principal, donde sale toda la lista de usuarios
-    list_display = ('username', 'email', 'role','is_admin')
+    list_display = ('username', 'email', 'role', 'is_admin')
 
     # Aqui editas que filtros ves y puedes aplicar en la tabla principal de los usuarios
     list_filter = ('role', 'is_staff')
