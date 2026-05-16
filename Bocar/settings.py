@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'users',
     'djoser',
     'RFQ_Mold',
+    'RFQ_Trimming',
     'rest_framework_simplejwt',
     'drf_spectacular',
 ]
