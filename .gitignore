@@ -1,0 +1,21 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entornos virtuales (por si acaso)
+venv/
+env/
+.env
+
+# Archivos de la BD local (si usaran SQLite en algún punto)
+db.sqlite3
+*.sqlite3
+
+# Archivos estáticos y multimedia
+media/
+static/
+
+# Configuración del IDE
+.vscode/
+.idea/
