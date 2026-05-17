@@ -7,6 +7,7 @@ class RFQ_Trimming(models.Model):
         INDUSTRIALIZACION = 'En_Ind', 'En Industrialización'
         COMERCIALIZACION = 'En_Com', 'En Comercialización'
         PROVEEDOR = 'En_Pro', 'En Proveedor'
+        
     # Info General
     status       = models.CharField (max_length=10, default= Roles.INDUSTRIALIZACION, choices=Roles.choices)
     created_by      = models.ForeignKey(

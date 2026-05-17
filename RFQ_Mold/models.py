@@ -15,7 +15,8 @@ class RFQ_Mold(models.Model):
     created_by   = models.ForeignKey(
                     settings.AUTH_USER_MODEL,
                     on_delete=models.PROTECT,
-                    related_name='rfq_molds_created', editable=False)
+                    related_name='rfq_molds_created', 
+                    )
 
     created_date  = models.DateTimeField(auto_now_add=True, editable=False)
     due_date      = models.DateField()
