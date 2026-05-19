@@ -57,10 +57,7 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True, # Pide confirmar la contraseña al registrarse
     'PERMISSIONS': {
-        # Bloquea la creación de usuarios (POST a /auth/users/) para todos.
-        # Solo superusuarios podrán crearlos (o puedes crearlos desde el panel de Admin).
         'user_create': ['rest_framework.permissions.IsAdminUser'],
-        # Oculta la lista de usuarios (GET a /auth/users/) para que nadie la vea
         'user_list': ['rest_framework.permissions.IsAdminUser'],
     }
 }
@@ -73,9 +70,14 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Tu API',
-    'DESCRIPTION': 'Descripción de la API',
+    'TITLE': 'API SWAGGER FOR BOCAR',
+
+    'DESCRIPTION': '''Este es el API Swagger para el proyecto Bocar,
+    que incluye endpoints para la gestión de RFQs de moldes y recortes, 
+    así como autenticación de usuarios.''',
+
     'VERSION': '1.0.0',
+    
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
