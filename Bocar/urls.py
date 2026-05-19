@@ -14,10 +14,10 @@ urlpatterns = [
     path('auth/jwt/refresh/', TokenRefreshView.as_view(), name='jwt-refresh'),
 
     # RFQ Mold -------------------------------------------------------
-    path('mold/api/v1/', include('RFQ_Mold.urls')),
+    path('api/v1/mold/', include('RFQ_Mold.urls')),
 
     # RFQ Trimming --------------------------------------------------
-    path('trimming/api/v1/', include('RFQ_Trimming.urls')),
+    path('api/v1/trimming/', include('RFQ_Trimming.urls')),
 
     # Esquema OpenAPI -------------------------------------------------
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
