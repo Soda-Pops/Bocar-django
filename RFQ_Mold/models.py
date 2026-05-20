@@ -4,6 +4,7 @@ from Bocar import settings
 
 class RFQ_Mold(models.Model):
 
+
     # ─── Choices para status ───────────────────────────────────────────────────
     class Status(models.TextChoices):
         # Renombrado de 'Roles' a 'Status' porque describe estados del registro, no roles

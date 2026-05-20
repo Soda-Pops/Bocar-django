@@ -110,3 +110,12 @@ class RFQ_Trimming(models.Model):
     #Ejectors (Defined by toolmaker)
     #Maximum weight of the part to be trimmed (kg)
     comments = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"RFQ Trimming - {self.id} -{self.status}"
+
+    class Meta:
+        db_table = 'RFQ_Trimming'
+        verbose_name = 'RFQ Trimming'
+        verbose_name_plural = 'RFQs Trimming'
+    

@@ -42,8 +42,10 @@ INSTALLED_APPS = [
     'djoser',
     'RFQ_Mold',
     'RFQ_Trimming',
+    'Proveedores',
     'rest_framework_simplejwt',
     'drf_spectacular',
+    'django_countries',
 ]
 
 REST_FRAMEWORK = {
