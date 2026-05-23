@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'RFQ_Mold',
     'RFQ_Trimming',
     'Proveedores',
+    'General',
     'rest_framework_simplejwt',
     'drf_spectacular',
     'django_countries',
@@ -51,7 +52,7 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'users.authentication.CookieJWTAuthentication',
     ),
 }
 
@@ -67,9 +68,15 @@ DJOSER = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15), # El token de uso diario
     'REFRESH_TOKEN_LIFETIME': timedelta(hours=10),    # El token para renovar
+    'ROTATE_REFRESH_TOKENS':  True,
+    'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',), 
     'TOKEN_OBTAIN_SERIALIZER': "users.serializers.CustomTokenObtainPairSerializer",              # Para usar "Bearer <token>"
 }
+
+# Configuración de cookies
+COOKIE_SECURE   = not DEBUG   # True en producción (HTTPS), False en desarrollo
+COOKIE_SAMESITE = 'Lax'    
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API SWAGGER FOR BOCAR',

@@ -1,35 +1,131 @@
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.views import APIView
+from rest_framework.generics import UpdateAPIView
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, JSONParser
+from django.db.models import Count
 
-import RFQ_Mold
-from .models import RFQ_Trimming
-from .serializers import RFQTrimmingListSerializer, RFQTrimmingSerializer
+from .models import RFQ_Trimming, RFQ_Trimming_EditRequest
+from .serializers import RFQTrimmingCreateSerializer, RFQTrimmingDetailSerializer, RFQTrimmingListSerializer, TrimmingEditRequestCreateSerializer, TrimmingEditRequestListSerializer, TrimmingEditRequestApproveSerializer
 
-# 1. Endpoint para LISTAR y CREAR (POST / GET general)
+# Importamos los permisos personalizados definidos en la app
+# Si los tienes en otra app ajusta el import: from apps.rfq_mold.permissions import ...
+from General.permissions import IsAdminUser, IsComercializacionAdmin
+
 class RFQTrimmingListCreateView(generics.ListCreateAPIView):
-    queryset = RFQ_Trimming.objects.all()
+    """
+    GET  /rfq-trimmings/
+    Devuelve la lista de RFQ Trimmings activos (logical_delete=False) con campos resumidos.
+    Campos: id, status, created_by, created_by_name, created_date, due_date, complete, logical_delete.
+ 
+    POST /rfq-trimmings/
+    Crea un nuevo RFQ Trimming. Acepta archivos opcionales bajo el key 'archivos'.
+    El campo created_by se asigna automáticamente con el usuario autenticado.
+    Enviar como multipart/form-data si se incluyen archivos.
+    """
     permission_classes = [IsAuthenticated]
-
-    # Usamos el serializador recortado para el GET general
-    serializer_class = RFQTrimmingListSerializer 
-
-    def perform_create(self, serializer):
-        # Al hacer POST, Django REST Framework usará el serializador de la vista, 
-        # pero aquí aseguramos que se guarde el usuario actual.
-        serializer.save(created_by=self.request.user)
-
-    # Tip pro: Si quieres usar el serializador completo SOLO para el POST, 
-    # puedes sobrescribir este método:
+    parser_classes     = [MultiPartParser, JSONParser]
+ 
+    def get_queryset(self):
+        return RFQ_Trimming.objects.filter(logical_delete=False)
+ 
     def get_serializer_class(self):
         if self.request.method == 'POST':
-            return RFQTrimmingSerializer
+            return RFQTrimmingCreateSerializer
         return RFQTrimmingListSerializer
-
-
-# 2. Endpoint para ver el DETALLE de uno solo (GET específico)
-# Al usar RetrieveAPIView, no existe ni PUT, ni PATCH, ni DELETE.
+ 
+    def perform_create(self, serializer):
+        archivos = self.request.FILES.getlist('archivos')
+        serializer.save(created_by=self.request.user, archivos=archivos)
+ 
+ 
 class RFQTrimmingDetailView(generics.RetrieveAPIView):
-    queryset = RFQ_Trimming.objects.all()
+    """
+    GET /rfq-trimmings/<id>/
+    Devuelve todos los campos del RFQ Trimming incluyendo archivos adjuntos y nombre del creador.
+    También devuelve registros con logical_delete=True para consulta de historial.
+    """
     permission_classes = [IsAuthenticated]
-    # Usamos el serializador completo con toda la info del usuario
-    serializer_class = RFQTrimmingSerializer
+    serializer_class   = RFQTrimmingDetailSerializer
+ 
+    def get_queryset(self):
+        return RFQ_Trimming.objects.all()
+ 
+ 
+class RFQTrimmingLogicalDeleteView(UpdateAPIView):
+    """
+    PATCH /rfq-trimmings/<id>/delete/
+    Marca el RFQ Trimming como eliminado (logical_delete=True).
+    El registro NO se borra físicamente de la base de datos.
+    Retorna error si el registro ya estaba marcado como eliminado.
+    Requiere: is_admin=True.
+    """
+    permission_classes = [IsAdminUser]
+    queryset           = RFQ_Trimming.objects.all()
+    http_method_names  = ['patch']
+ 
+    def partial_update(self, request, *args, **kwargs):
+        rfq = self.get_object()
+ 
+        if rfq.logical_delete:
+            return Response(
+                {'error': 'Este registro ya fue eliminado.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+ 
+        rfq.logical_delete = True
+        rfq.save()
+        return Response(
+            {'message': 'Registro eliminado correctamente.'},
+            status=status.HTTP_200_OK
+        )
+ 
+ 
+class TrimmingEditRequestCreateView(generics.CreateAPIView):
+    """
+    POST /rfq-trimmings/edit-requests/create/
+    Crea una solicitud para regresar el status del RFQ Trimming de En_Com a En_Ind.
+    Validaciones:
+      - El RFQ debe estar en status En_Com.
+      - No puede existir ya una solicitud Pendiente para el mismo RFQ.
+    El campo requested_by se asigna automáticamente con el usuario autenticado.
+    """
+    serializer_class   = TrimmingEditRequestCreateSerializer
+    permission_classes = [IsAuthenticated]
+ 
+    def perform_create(self, serializer):
+        serializer.save(requested_by=self.request.user)
+ 
+ 
+class TrimmingEditRequestListView(generics.ListAPIView):
+    """
+    GET /rfq-trimmings/edit-requests/
+    Devuelve todas las solicitudes de edición con status=Pendiente.
+    Campos: id, rfq_trimming, rfq_trimming_status, requested_by, requested_by_name, requested_at, status, reason.
+    Requiere: is_admin=True y role=Com.
+    """
+    serializer_class   = TrimmingEditRequestListSerializer
+    permission_classes = [IsComercializacionAdmin]
+ 
+    def get_queryset(self):
+        return RFQ_Trimming_EditRequest.objects.filter(status='Pendiente')
+ 
+ 
+class TrimmingEditRequestApproveView(UpdateAPIView):
+    """
+    PATCH /rfq-trimmings/edit-requests/<id>/approve/
+    Aprueba una solicitud de edición pendiente.
+    Al aprobar:
+      - La solicitud cambia a status=Aprobada.
+      - El RFQ Trimming cambia su status a En_Ind.
+    Validaciones:
+      - La solicitud debe estar en status Pendiente.
+      - El RFQ no debe estar en status En_Pro.
+    Requiere: is_admin=True y role=Com.
+    """
+    serializer_class   = TrimmingEditRequestApproveSerializer
+    permission_classes = [IsComercializacionAdmin]
+    queryset           = RFQ_Trimming_EditRequest.objects.all()
+    http_method_names  = ['patch']
+ 
