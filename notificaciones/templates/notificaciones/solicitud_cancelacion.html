@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Calibri, Arial, sans-serif; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 30px auto; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .header { background-color: #8b0000; color: #fff; padding: 20px 30px; }
+    .header h1 { margin: 0; font-size: 20px; }
+    .body { padding: 24px 30px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+    td:first-child { font-weight: bold; width: 40%; color: #555; }
+    .motivo { background: #fff5f5; border-left: 4px solid #8b0000; padding: 10px 14px; margin-top: 16px; font-size: 14px; }
+    .footer { background-color: #f5f5f5; padding: 14px 30px; font-size: 12px; color: #888; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Solicitud de cancelación — RFQ #{{ rfq.id }}</h1>
+    </div>
+    <div class="body">
+      <p>
+        El usuario <strong>{{ solicitante.first_name }} {{ solicitante.last_name }}</strong>
+        ({{ solicitante.get_role_display }}) ha solicitado la cancelación de la siguiente RFQ.
+        <strong>Se requiere acción de un administrador para proceder.</strong>
+      </p>
+      <table>
+        <tr><td>RFQ</td><td>#{{ rfq.id }} — {{ rfq.DESC }}</td></tr>
+        <tr><td>Cliente</td><td>{{ rfq.CUST }}</td></tr>
+        <tr><td>Número de parte</td><td>{{ rfq.PNUM }}</td></tr>
+        <tr><td>Status actual</td><td>{{ rfq.get_status_display }}</td></tr>
+        <tr><td>Solicitante</td><td>{{ solicitante.first_name }} {{ solicitante.last_name }} ({{ solicitante.get_role_display }})</td></tr>
+      </table>
+      {% if motivo %}
+      <div class="motivo">
+        <strong>Motivo de cancelación:</strong> {{ motivo }}
+      </div>
+      {% endif %}
+      <p style="margin-top:20px;">Para confirmar la cancelación, ingrese al sistema y ejecute la acción de cancelación en la RFQ.</p>
+    </div>
+    <div class="footer">Este es un correo automático generado por el sistema BOCAR. Por favor no responda a este mensaje.</div>
+  </div>
+</body>
+</html>

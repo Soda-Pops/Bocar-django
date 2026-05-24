@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 from datetime import timedelta
 
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_spectacular',
     'django_countries',
+    'notificaciones',
 ]
 
 REST_FRAMEWORK = {
@@ -168,3 +170,26 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# ---------------------------------------------------------------------------
+# Email — Microsoft 365 (Office 365)
+# Para producción: cambiar EMAIL_BACKEND a 'django.core.mail.backends.smtp.EmailBackend'
+# y definir las variables de entorno BOCAR_EMAIL_USER y BOCAR_EMAIL_PASSWORD.
+# ---------------------------------------------------------------------------
+EMAIL_BACKEND       = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST          = 'smtp.office365.com'
+EMAIL_PORT          = 587
+EMAIL_USE_TLS       = True
+EMAIL_HOST_USER     = os.environ.get('BOCAR_EMAIL_USER', 'CORREO@DOMINIO.COM')
+EMAIL_HOST_PASSWORD = os.environ.get('BOCAR_EMAIL_PASSWORD', '')
+DEFAULT_FROM_EMAIL  = EMAIL_HOST_USER
+
+# ---------------------------------------------------------------------------
+# Celery — broker Redis
+# ---------------------------------------------------------------------------
+CELERY_BROKER_URL        = os.environ.get('CELERY_BROKER_URL', 'amqp://guest:guest@localhost:5672//')
+CELERY_RESULT_BACKEND    = 'rpc://'
+CELERY_ACCEPT_CONTENT    = ['json']
+CELERY_TASK_SERIALIZER   = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE          = TIME_ZONE

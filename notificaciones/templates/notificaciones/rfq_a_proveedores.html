@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Calibri, Arial, sans-serif; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 30px auto; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .header { background-color: #1a3c6e; color: #fff; padding: 20px 30px; }
+    .header h1 { margin: 0; font-size: 20px; }
+    .body { padding: 24px 30px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+    td:first-child { font-weight: bold; width: 40%; color: #555; }
+    .footer { background-color: #f5f5f5; padding: 14px 30px; font-size: 12px; color: #888; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Solicitud de Cotización — RFQ #{{ rfq.id }}</h1>
+    </div>
+    <div class="body">
+      <p>BOCAR le ha enviado una Solicitud de Cotización (RFQ) para el siguiente proyecto de herramental:</p>
+      <table>
+        <tr><td>ID</td><td>#{{ rfq.id }}</td></tr>
+        <tr><td>Descripción</td><td>{{ rfq.DESC }}</td></tr>
+        <tr><td>Cliente</td><td>{{ rfq.CUST }}</td></tr>
+        <tr><td>Número de parte</td><td>{{ rfq.PNUM }}</td></tr>
+        <tr><td>Tipo de herramienta</td><td>{{ rfq.TT }}</td></tr>
+        <tr><td>Fecha límite de cotización</td><td>{{ rfq.due_date|date:"d/m/Y" }}</td></tr>
+      </table>
+      <p style="margin-top:20px;">
+        Por favor ingrese al sistema con sus credenciales para consultar todos los detalles técnicos
+        y cargar su cotización antes de la fecha límite indicada.
+      </p>
+    </div>
+    <div class="footer">Este es un correo automático generado por el sistema BOCAR. Por favor no responda a este mensaje.</div>
+  </div>
+</body>
+</html>

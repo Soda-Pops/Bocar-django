@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Calibri, Arial, sans-serif; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 30px auto; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .header { background-color: #555; color: #fff; padding: 20px 30px; }
+    .header h1 { margin: 0; font-size: 20px; }
+    .body { padding: 24px 30px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+    td:first-child { font-weight: bold; width: 40%; color: #555; }
+    .motivo { background: #f5f5f5; border-left: 4px solid #555; padding: 10px 14px; margin-top: 16px; font-size: 14px; }
+    .footer { background-color: #f5f5f5; padding: 14px 30px; font-size: 12px; color: #888; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>RFQ #{{ rfq.id }} — Cancelada</h1>
+    </div>
+    <div class="body">
+      <p>La siguiente RFQ ha sido cancelada y ya no requiere acciones adicionales.</p>
+      <table>
+        <tr><td>RFQ</td><td>#{{ rfq.id }} — {{ rfq.DESC }}</td></tr>
+        <tr><td>Cliente</td><td>{{ rfq.CUST }}</td></tr>
+        <tr><td>Número de parte</td><td>{{ rfq.PNUM }}</td></tr>
+        <tr><td>Cancelado por</td><td>{{ cancelado_por.first_name }} {{ cancelado_por.last_name }}</td></tr>
+      </table>
+      {% if motivo %}
+      <div class="motivo">
+        <strong>Motivo de cancelación:</strong> {{ motivo }}
+      </div>
+      {% endif %}
+      <p style="margin-top:20px;">Puede consultar el historial completo de esta RFQ en el sistema.</p>
+    </div>
+    <div class="footer">Este es un correo automático generado por el sistema BOCAR. Por favor no responda a este mensaje.</div>
+  </div>
+</body>
+</html>

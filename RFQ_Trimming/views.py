@@ -13,6 +13,9 @@ from .serializers import RFQTrimmingCreateSerializer, RFQTrimmingDetailSerialize
 # Si los tienes en otra app ajusta el import: from apps.rfq_mold.permissions import ...
 from General.permissions import IsAdminUser, IsComercializacionAdmin
 
+from notificaciones import tasks as notif_tasks
+from notificaciones.services import ROL_INDUSTRIALIZACION, ROL_COMERCIALIZACION
+
 class RFQTrimmingListCreateView(generics.ListCreateAPIView):
     """
     GET  /rfq-trimmings/
@@ -76,12 +79,13 @@ class RFQTrimmingLogicalDeleteView(UpdateAPIView):
  
         rfq.logical_delete = True
         rfq.save()
+        notif_tasks.notificar_cancelacion_confirmada.delay(rfq.id, 'trimming', request.user.id)
         return Response(
             {'message': 'Registro eliminado correctamente.'},
             status=status.HTTP_200_OK
         )
- 
- 
+
+
 class TrimmingEditRequestCreateView(generics.CreateAPIView):
     """
     POST /rfq-trimmings/edit-requests/create/
@@ -95,9 +99,10 @@ class TrimmingEditRequestCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
  
     def perform_create(self, serializer):
-        serializer.save(requested_by=self.request.user)
- 
- 
+        instance = serializer.save(requested_by=self.request.user)
+        notif_tasks.notificar_modificacion_rfq.delay(instance.rfq_trimming.id, 'trimming', self.request.user.id, [ROL_COMERCIALIZACION])
+
+
 class TrimmingEditRequestListView(generics.ListAPIView):
     """
     GET /rfq-trimmings/edit-requests/
@@ -128,4 +133,11 @@ class TrimmingEditRequestApproveView(UpdateAPIView):
     permission_classes = [IsComercializacionAdmin]
     queryset           = RFQ_Trimming_EditRequest.objects.all()
     http_method_names  = ['patch']
- 
+
+    def partial_update(self, request, *args, **kwargs):
+        edit_request = self.get_object()
+        rfq          = edit_request.rfq_trimming
+        response     = super().partial_update(request, *args, **kwargs)
+        notif_tasks.notificar_modificacion_rfq.delay(rfq.id, 'trimming', request.user.id, [ROL_INDUSTRIALIZACION])
+        return response
+

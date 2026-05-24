@@ -12,6 +12,9 @@ from .serializers import RFQMoldCreateSerializer, RFQMoldDetailSerializer, RFQMo
 # Permisos definidos en la app 'general'
 from General.permissions import IsAdminUser, IsComercializacionAdmin
 
+from notificaciones import tasks as notif_tasks
+from notificaciones.services import ROL_INDUSTRIALIZACION, ROL_COMERCIALIZACION
+
 
 
 class RFQMoldListCreateView(generics.ListCreateAPIView):
@@ -68,21 +71,22 @@ class RFQMoldLogicalDeleteView(UpdateAPIView):
  
     def partial_update(self, request, *args, **kwargs):
         rfq = self.get_object()
- 
+
         if rfq.logical_delete:
             return Response(
                 {'error': 'Este registro ya fue eliminado.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
- 
+
         rfq.logical_delete = True
         rfq.save()
+        notif_tasks.notificar_cancelacion_confirmada.delay(rfq.id, 'mold', request.user.id)
         return Response(
             {'message': 'Registro eliminado correctamente.'},
             status=status.HTTP_200_OK
         )
- 
- 
+
+
 class MoldEditRequestCreateView(generics.CreateAPIView):
     """
     POST /rfq-molds/edit-requests/create/
@@ -96,9 +100,10 @@ class MoldEditRequestCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
  
     def perform_create(self, serializer):
-        serializer.save(requested_by=self.request.user)
- 
- 
+        instance = serializer.save(requested_by=self.request.user)
+        notif_tasks.notificar_modificacion_rfq.delay(instance.rfq_mold.id, 'mold', self.request.user.id, [ROL_COMERCIALIZACION])
+
+
 class MoldEditRequestListView(generics.ListAPIView):
     """
     GET /rfq-molds/edit-requests/
@@ -129,4 +134,10 @@ class MoldEditRequestApproveView(UpdateAPIView):
     permission_classes = [IsComercializacionAdmin]
     queryset           = RFQ_Mold_EditRequest.objects.all()
     http_method_names  = ['patch']
- 
+
+    def partial_update(self, request, *args, **kwargs):
+        edit_request = self.get_object()
+        rfq          = edit_request.rfq_mold
+        response     = super().partial_update(request, *args, **kwargs)
+        notif_tasks.notificar_modificacion_rfq.delay(rfq.id, 'mold', request.user.id, [ROL_INDUSTRIALIZACION])
+        return response

@@ -33,4 +33,54 @@ Hemos implentado **Swagger** como medio estandar de documetacion de **APIs**, as
 python manage.py createsuperuser
 ```
 
+---
 
+## **Sistema de Notificaciones por Email**
+
+El módulo `notificaciones/` envía correos automáticos vía **BCC** al ocurrir eventos clave en el flujo de RFQs. El envío es **asíncrono** (Celery + RabbitMQ).
+
+| Evento | Destinatarios (BCC) |
+|--------|---------------------|
+| RFQ enviada a revisión | Comercialización |
+| RFQ regresada a Industrialización | Industrialización |
+| RFQ eliminada lógicamente | Industrialización + Comercialización |
+| RFQ enviada a proveedores | Proveedor |
+| Cotización recibida | Comercialización |
+| Solicitud de cancelación | Admins (`is_admin=True`) |
+
+### Variables de entorno
+
+| Variable | Descripción | Default |
+|----------|-------------|---------|
+| `BOCAR_EMAIL_USER` | Cuenta de correo de notificaciones | `CORREO@DOMINIO.COM` |
+| `BOCAR_EMAIL_PASSWORD` | Contraseña de la cuenta | — |
+| `CELERY_BROKER_URL` | URL del broker RabbitMQ | `amqp://guest:guest@localhost:5672//` |
+
+### Puesta en marcha
+
+```bash
+# 1. Instalar dependencias de Celery
+pip install celery[librabbitmq]
+
+# 2. Levantar RabbitMQ (Management UI en http://localhost:15672)
+docker run -p 5672:5672 -p 15672:15672 rabbitmq:management
+
+# 3. Correr el worker en una terminal separada
+celery -A Bocar worker --loglevel=info
+```
+
+En **producción** cambiar `EMAIL_BACKEND` en `Bocar/settings.py`:
+
+```python
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+```
+
+### Tests
+
+```bash
+python manage.py test notificaciones
+```
+
+Cubre: lógica de BCC/TO en `_enviar`, filtrado de destinatarios por rol, casos sin destinatarios, y ejecución de tareas Celery (15 tests, sin broker requerido).
+
+> Ver endpoints y triggers detallados en [`ENDPOINTS.md`](ENDPOINTS.md).
