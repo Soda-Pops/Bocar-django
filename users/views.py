@@ -153,3 +153,24 @@ class RefreshTokenView(APIView):
                 {'error': 'Refresh token inválido o expirado.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+        
+
+class MeView(APIView):
+    """
+    GET /auth/me/
+    Valida la sesión activa y devuelve los datos del usuario autenticado.
+    El frontend debe llamar este endpoint al cargar la app para reconstruir
+    la sesión de forma segura — no desde localStorage ni decodificando el token localmente.
+    Si la cookie es inválida o expiró, devuelve 401 y el frontend redirige al login.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            'id':       user.id,
+            'email':    user.email,
+            'username': user.username,
+            'role':     user.role,
+            'is_admin': user.is_admin,
+        })
