@@ -82,14 +82,3 @@ python manage.py test notificaciones
 ```
 
 Cubre: lógica de BCC/TO en `_enviar`, filtrado de destinatarios por rol, casos sin destinatarios, y ejecución de tareas Celery (15 tests, sin broker requerido).
-
-> Ver endpoints y triggers detallados en [`ENDPOINTS.md`](ENDPOINTS.md).
-
-
-tras la ultima actualizacion se implemento rabbit mq para realizar procesos asincronicos, esto con celery y RabbitMQ, por lo que es necesario descargar la imagen docker de RabbisMQ
-
-```bash
-# latest RabbitMQ 4.x
-docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
-```
-
