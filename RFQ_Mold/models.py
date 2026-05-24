@@ -2,12 +2,12 @@ from django.db import models
 from Bocar import settings
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# MODELO PRINCIPAL
+# ─────────────────────────────────────────────────────────────────────────────
 class RFQ_Mold(models.Model):
 
-
-    # ─── Choices para status ───────────────────────────────────────────────────
     class Status(models.TextChoices):
-        # Renombrado de 'Roles' a 'Status' porque describe estados del registro, no roles
         INDUSTRIALIZACION = 'En_Ind', 'En Industrialización'
         COMERCIALIZACION  = 'En_Com', 'En Comercialización'
         PROVEEDOR         = 'En_Pro', 'En Proveedor'
@@ -16,7 +16,7 @@ class RFQ_Mold(models.Model):
     status         = models.CharField(max_length=10, default=Status.INDUSTRIALIZACION, choices=Status.choices)
     created_by     = models.ForeignKey(
                         settings.AUTH_USER_MODEL,
-                        on_delete=models.PROTECT,           # Protege al usuario de ser borrado si tiene registros
+                        on_delete=models.PROTECT,
                         related_name='rfq_molds_created',
                     )
     created_date   = models.DateTimeField(auto_now_add=True, editable=False)
@@ -25,7 +25,7 @@ class RFQ_Mold(models.Model):
     logical_delete = models.BooleanField(default=False)
 
     # ─── Datos primera parte ───────────────────────────────────────────────────
-    DESC  = models.CharField(max_length=255, blank=True, default="")    # blank=True agregado para consistencia
+    DESC  = models.CharField(max_length=255, blank=True, default="")
     PPY   = models.FloatField(default=0.0)
     CUST  = models.CharField(max_length=100, blank=True, default="")
     PT    = models.CharField(max_length=100, blank=True, default="")
@@ -36,14 +36,11 @@ class RFQ_Mold(models.Model):
     ELAB  = models.CharField(max_length=255, blank=True, default="")
 
     # ─── DCM ───────────────────────────────────────────────────────────────────
-    # CORRECCIONES: FloatField no acepta max_length — ese parámetro es solo para CharField
-    # ThirdPSupp tenía default=0.0 siendo CharField → corregido a default=""
-    # No_CAV tenía default=0.0 siendo CharField → corregido a default=""
     SMACH         = models.CharField(max_length=100, blank=True, default="")
-    No_CAV        = models.CharField(max_length=100, blank=True, default="")   # FIX: default="" en vez de 0.0
-    No_ofHS       = models.FloatField(blank=True, default=0.0)                 # FIX: quitado max_length
-    No_ofMS       = models.FloatField(blank=True, default=0.0)                 # FIX: quitado max_length
-    ThirdPSupp    = models.CharField(max_length=100, blank=True, default="")   # FIX: default="" en vez de 0.0
+    No_CAV        = models.CharField(max_length=100, blank=True, default="")
+    No_ofHS       = models.FloatField(blank=True, default=0.0)
+    No_ofMS       = models.FloatField(blank=True, default=0.0)
+    ThirdPSupp    = models.CharField(max_length=100, blank=True, default="")
     No_subc       = models.CharField(max_length=100, blank=True, default="")
     Jco           = models.CharField(max_length=100, blank=True, default="")
     QcSys         = models.CharField(max_length=100, blank=True, default="")
@@ -59,7 +56,6 @@ class RFQ_Mold(models.Model):
     Oth           = models.CharField(max_length=100, blank=True, default="")
 
     # ─── DATA INFORMATION REQUIRED IN THE PRICE OF THE DIE ────────────────────
-    # Patrón: campo BooleanField + campo de nota CharField
     D_3D                         = models.BooleanField(default=False)
     D_3D_note                    = models.CharField(max_length=250, blank=True, default="")
     FlAn                         = models.BooleanField(default=False)
@@ -82,20 +78,20 @@ class RFQ_Mold(models.Model):
     D3_Mod_solid_Native_note     = models.CharField(max_length=250, blank=True, default="")
 
     # ─── OT INF ────────────────────────────────────────────────────────────────
-    Comp_Die          = models.BooleanField(default=False)
-    Comp_Die_note     = models.CharField(max_length=250, blank=True, default="")
-    Subseq_D          = models.BooleanField(default=False)
-    Subseq_D_note     = models.CharField(max_length=250, blank=True, default="")
-    Set_of_repl_H13   = models.BooleanField(default=False)
+    Comp_Die             = models.BooleanField(default=False)
+    Comp_Die_note        = models.CharField(max_length=250, blank=True, default="")
+    Subseq_D             = models.BooleanField(default=False)
+    Subseq_D_note        = models.CharField(max_length=250, blank=True, default="")
+    Set_of_repl_H13      = models.BooleanField(default=False)
     Set_of_repl_H13_note = models.CharField(max_length=250, blank=True, default="")
-    Sp_set_of_EI      = models.BooleanField(default=False)
-    Sp_set_of_EI_note = models.CharField(max_length=250, blank=True, default="")
-    FICF              = models.BooleanField(default=False)
-    FICF_note         = models.CharField(max_length=250, blank=True, default="")
-    HCLS              = models.BooleanField(default=False)
-    HCLS_note         = models.CharField(max_length=250, blank=True, default="")
-    Fr_Refur          = models.BooleanField(default=False)
-    Fr_Refur_note     = models.CharField(max_length=250, blank=True, default="")
+    Sp_set_of_EI         = models.BooleanField(default=False)
+    Sp_set_of_EI_note    = models.CharField(max_length=250, blank=True, default="")
+    FICF                 = models.BooleanField(default=False)
+    FICF_note            = models.CharField(max_length=250, blank=True, default="")
+    HCLS                 = models.BooleanField(default=False)
+    HCLS_note            = models.CharField(max_length=250, blank=True, default="")
+    Fr_Refur             = models.BooleanField(default=False)
+    Fr_Refur_note        = models.CharField(max_length=250, blank=True, default="")
 
     # ─── OTHER Information ─────────────────────────────────────────────────────
     Eyeb                 = models.BooleanField(default=False)
@@ -116,51 +112,92 @@ class RFQ_Mold(models.Model):
     Sp_Pt_note           = models.CharField(max_length=250, blank=True, default="")
 
     # ─── Part Geometry ─────────────────────────────────────────────────────────
-    alloy                = models.CharField(max_length=100, blank=True, default="")
-    part_dim_length_mm   = models.FloatField(null=True, blank=True)
-    part_dim_width_mm    = models.FloatField(null=True, blank=True)
-    part_dim_height_mm   = models.FloatField(null=True, blank=True)
+    alloy                 = models.CharField(max_length=100, blank=True, default="")
+    part_dim_length_mm    = models.FloatField(null=True, blank=True)
+    part_dim_width_mm     = models.FloatField(null=True, blank=True)
+    part_dim_height_mm    = models.FloatField(null=True, blank=True)
     min_wall_thickness_mm = models.FloatField(null=True, blank=True)
     max_wall_thickness_mm = models.FloatField(null=True, blank=True)
-    projected_area_cm2   = models.FloatField(null=True, blank=True)
-    surface_cm2          = models.FloatField(null=True, blank=True)
-    volume_cm3           = models.FloatField(null=True, blank=True)
-    gross_weight_g       = models.FloatField(null=True, blank=True)
+    projected_area_cm2    = models.FloatField(null=True, blank=True)
+    surface_cm2           = models.FloatField(null=True, blank=True)
+    volume_cm3            = models.FloatField(null=True, blank=True)
+    gross_weight_g        = models.FloatField(null=True, blank=True)
 
     # ─── Tool Specification ────────────────────────────────────────────────────
-    # CORRECCIÓN: estos campos representan cantidades numéricas, no texto
-    # Se cambian a IntegerField para que la BD los trate correctamente
-    number_of_gates_per_part   = models.IntegerField(null=True, blank=True)   # FIX: CharField → IntegerField
-    number_of_parts_per_stroke = models.IntegerField(null=True, blank=True)   # FIX: CharField → IntegerField
-    number_of_tools            = models.IntegerField(null=True, blank=True)   # FIX: CharField → IntegerField
+    number_of_gates_per_part   = models.IntegerField(null=True, blank=True)
+    number_of_parts_per_stroke = models.IntegerField(null=True, blank=True)
+    number_of_tools            = models.IntegerField(null=True, blank=True)
 
     comments = models.TextField(blank=True, default="")
-
-    class Meta:
-        verbose_name = 'RFQ Mold'
-        verbose_name_plural = 'RFQ Molds'
-        ordering = ['-created_date']    # Los más recientes primero por defecto
 
     def __str__(self):
         return f"RFQ_Mold {self.id} - {self.status}"
 
+    class Meta:
+        verbose_name        = 'RFQ Mold'
+        verbose_name_plural = 'RFQ Molds'
+        ordering            = ['-created_date']
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ARCHIVOS ADJUNTOS
+# ─────────────────────────────────────────────────────────────────────────────
 class RFQ_Mold_File(models.Model):
-    # FK hacia RFQ_Mold — CASCADE: si se borra el registro padre, se borran sus archivos
-    # related_name='archivos' permite hacer rfq_mold.archivos.all()
-    rfq_mold = models.ForeignKey(
-        RFQ_Mold,
-        on_delete=models.CASCADE,
-        related_name='archivos'
-    )
-    # upload_to define la subcarpeta dentro de MEDIA_ROOT
+    rfq_mold    = models.ForeignKey(
+                    RFQ_Mold,
+                    on_delete=models.CASCADE,
+                    related_name='archivos'     # rfq_mold.archivos.all()
+                  )
     archivo     = models.FileField(upload_to='rfq_mold/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        verbose_name = 'Archivo RFQ Mold'
-        verbose_name_plural = 'Archivos RFQ Mold'
-        ordering = ['uploaded_at']
-
     def __str__(self):
         return f"Archivo {self.id} de RFQ_Mold {self.rfq_mold.id}"
+
+    class Meta:
+        verbose_name        = 'Archivo RFQ Mold'
+        verbose_name_plural = 'Archivos RFQ Mold'
+        ordering            = ['uploaded_at']
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SOLICITUDES DE EDICIÓN
+# Guarda cada vez que alguien pide regresar el RFQ de En_Com a En_Ind
+# ─────────────────────────────────────────────────────────────────────────────
+class RFQ_Mold_EditRequest(models.Model):
+
+    class EditStatus(models.TextChoices):
+        PENDIENTE = 'Pendiente', 'Pendiente'
+        APROBADA  = 'Aprobada',  'Aprobada'
+        RECHAZADA = 'Rechazada', 'Rechazada'
+
+    rfq_mold     = models.ForeignKey(
+                    RFQ_Mold,
+                    on_delete=models.CASCADE,
+                    related_name='edit_requests'
+                   )
+    requested_by = models.ForeignKey(
+                    settings.AUTH_USER_MODEL,
+                    on_delete=models.PROTECT,
+                    related_name='mold_edit_requests_made'
+                   )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    status       = models.CharField(max_length=20, choices=EditStatus.choices, default=EditStatus.PENDIENTE)
+    reason       = models.TextField(blank=True, default="")
+
+    # Se llena al aprobar — null mientras esté pendiente
+    reviewed_by  = models.ForeignKey(
+                    settings.AUTH_USER_MODEL,
+                    on_delete=models.PROTECT,
+                    related_name='mold_edit_requests_reviewed',
+                    null=True, blank=True
+                   )
+    reviewed_at  = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"EditRequest {self.id} - Mold {self.rfq_mold.id} - {self.status}"
+
+    class Meta:
+        verbose_name        = 'Solicitud de Edición Mold'
+        verbose_name_plural = 'Solicitudes de Edición Mold'
+        ordering            = ['-requested_at']

@@ -23,11 +23,7 @@ class Proveedor(models.Model):
     contact_email = models.EmailField()
     country = CountryField(blank=True, null=True)
     continent = models.CharField(max_length=2, choices=Continente.choices, default= 'NA') # en esto tengo dudas del default, o no se si se pueda identificar el continente por pais
-    rating = models.FloatField()
-
-    def __str__(self):
-        return self.company_name
-    
+    rating = models.FloatField(default=0.0)
     class Meta:
         db_table = 'Proveedores'
         verbose_name = 'Proveedor'
