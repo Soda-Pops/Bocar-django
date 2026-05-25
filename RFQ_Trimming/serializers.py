@@ -80,6 +80,10 @@ class RFQTrimmingDetailSerializer(serializers.ModelSerializer):
 class RFQTrimmingListSerializer(serializers.ModelSerializer):
 
     created_by_name = serializers.ReadOnlyField(source='created_by.username')
+    rfq_type        = serializers.SerializerMethodField()
+
+    def get_rfq_type(self, obj):
+        return 'Trimming'   # Valor fijo — siempre será Trimming en este serializer
 
     class Meta:
         model = RFQ_Trimming
@@ -92,6 +96,7 @@ class RFQTrimmingListSerializer(serializers.ModelSerializer):
             'due_date',
             'complete',
             'logical_delete',
+            'rfq_type',
         ]
 
 

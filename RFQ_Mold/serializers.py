@@ -79,10 +79,14 @@ class RFQMoldListSerializer(serializers.ModelSerializer):
     class Meta:
         model  = RFQ_Mold
         fields = [
-            'id', 'status',
-            'created_by', 'created_by_name',
-            'created_date', 'due_date',
-            'complete', 'logical_delete',
+            'id', 
+            'status',
+            'created_by', 
+            'created_by_name',
+            'created_date', 
+            'due_date',
+            'complete', 
+            'logical_delete',
             'rfq_type',   # <-- campo nuevo
         ]
 

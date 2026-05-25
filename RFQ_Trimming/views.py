@@ -15,7 +15,7 @@ from General.permissions import IsAdminUser, IsComercializacionAdmin
 
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION, ROL_COMERCIALIZACION
-from .Bocar import settings
+from Bocar import settings
 
 class RFQTrimmingListCreateView(generics.ListCreateAPIView):
     """
@@ -80,7 +80,7 @@ class RFQTrimmingLogicalDeleteView(UpdateAPIView):
  
         rfq.logical_delete = True
         rfq.save()
-        
+
         if settings.NOTIFICATIONS_ENABLED:
             notif_tasks.notificar_cancelacion_confirmada.delay(rfq.id, 'trimming', request.user.id)
         
