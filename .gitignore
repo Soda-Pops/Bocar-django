@@ -19,3 +19,6 @@ static/
 # Configuración del IDE
 .vscode/
 .idea/
+
+.rfq_mold/
+.rfq_trimming/
