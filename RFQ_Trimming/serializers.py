@@ -35,6 +35,15 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
             required=False
         )
 
+    def validate_status(self, value):
+        # En_Pro está bloqueado en creación — el status Proveedor
+        # solo se asigna mediante el flujo de aprobación, no directamente
+        if value == RFQ_Trimming.Status.PROVEEDOR:
+            raise serializers.ValidationError(
+                "No se puede crear un RFQ directamente en status 'En Proveedor'."
+            )
+        return value
+
     def create(self, validated_data):
         # Extraemos archivos antes del INSERT — si no mandaron, lista vacía
         archivos = validated_data.pop('archivos', [])

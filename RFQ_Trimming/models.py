@@ -114,7 +114,7 @@ class RFQ_Trimming_File(models.Model):
         on_delete=models.CASCADE,
         related_name='archivos'         # rfq_trimming.archivos.all()
     )
-    archivo     = models.FileField(upload_to='rfq_trimming/')
+    archivo     = models.FileField(upload_to='Files/RFQ_Trimming/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

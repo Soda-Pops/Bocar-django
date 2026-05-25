@@ -24,18 +24,24 @@ class RFQMoldCreateSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # 'archivos' no existe en el modelo, se inyecta manualmente
-        # __all__ solo carga campos del modelo, los extras van aquí
         self.fields['archivos'] = serializers.ListField(
             child=serializers.FileField(),
             write_only=True,
             required=False
         )
 
+    def validate_status(self, value):
+        # En_Pro está bloqueado en creación — el status Proveedor
+        # solo se asigna mediante el flujo de aprobación, no directamente
+        if value == RFQ_Mold.Status.PROVEEDOR:
+            raise serializers.ValidationError(
+                "No se puede crear un RFQ directamente en status 'En Proveedor'."
+            )
+        return value
+
     def create(self, validated_data):
-        # Extraemos archivos antes del INSERT — lista vacía si no mandaron
-        archivos  = validated_data.pop('archivos', [])
-        rfq_mold  = RFQ_Mold.objects.create(**validated_data)
+        archivos = validated_data.pop('archivos', [])
+        rfq_mold = RFQ_Mold.objects.create(**validated_data)
 
         for archivo in archivos:
             RFQ_Mold_File.objects.create(rfq_mold=rfq_mold, archivo=archivo)
@@ -65,6 +71,10 @@ class RFQMoldDetailSerializer(serializers.ModelSerializer):
 class RFQMoldListSerializer(serializers.ModelSerializer):
 
     created_by_name = serializers.ReadOnlyField(source='created_by.username')
+    rfq_type        = serializers.SerializerMethodField()
+
+    def get_rfq_type(self, obj):
+        return 'Mold'   # Valor fijo — siempre será Mold en este serializer
 
     class Meta:
         model  = RFQ_Mold
@@ -73,8 +83,8 @@ class RFQMoldListSerializer(serializers.ModelSerializer):
             'created_by', 'created_by_name',
             'created_date', 'due_date',
             'complete', 'logical_delete',
+            'rfq_type',   # <-- campo nuevo
         ]
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. SOLICITUD DE EDICIÓN — CREAR

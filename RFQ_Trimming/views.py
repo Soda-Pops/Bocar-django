@@ -15,6 +15,7 @@ from General.permissions import IsAdminUser, IsComercializacionAdmin
 
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION, ROL_COMERCIALIZACION
+from .Bocar import settings
 
 class RFQTrimmingListCreateView(generics.ListCreateAPIView):
     """
@@ -79,7 +80,10 @@ class RFQTrimmingLogicalDeleteView(UpdateAPIView):
  
         rfq.logical_delete = True
         rfq.save()
-        notif_tasks.notificar_cancelacion_confirmada.delay(rfq.id, 'trimming', request.user.id)
+        
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_cancelacion_confirmada.delay(rfq.id, 'trimming', request.user.id)
+        
         return Response(
             {'message': 'Registro eliminado correctamente.'},
             status=status.HTTP_200_OK

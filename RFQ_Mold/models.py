@@ -148,7 +148,7 @@ class RFQ_Mold_File(models.Model):
                     on_delete=models.CASCADE,
                     related_name='archivos'     # rfq_mold.archivos.all()
                   )
-    archivo     = models.FileField(upload_to='rfq_mold/')
+    archivo     = models.FileField(upload_to='Files/RFQ_Mold/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
