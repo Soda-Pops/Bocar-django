@@ -20,5 +20,5 @@ static/
 .vscode/
 .idea/
 
-.rfq_mold/
-.rfq_trimming/
+*.rfq_mold/
+*.rfq_trimming/
