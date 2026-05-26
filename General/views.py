@@ -5,6 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from RFQ_Mold.models import RFQ_Mold
 from RFQ_Trimming.models import RFQ_Trimming
 
+import calendar
+
 
 class RFQGlobalCountView(APIView):
     permission_classes = [IsAuthenticated]
@@ -37,6 +39,19 @@ class RFQGlobalCountView(APIView):
         trimmings_en_ind = trimmings.filter(status=RFQ_Trimming.Status.INDUSTRIALIZACION, created_by=user_id).count()
         total_en_ind     = molds_en_ind + trimmings_en_ind
 
+        # ─── 4. Creacion de Histograma por meses ──────────────────────────────
+        meses = calendar.month_name
+        hist = {}
+
+        for num_mes, mes in enumerate(meses):
+            if num_mes == 0: continue
+            molds_en_mes = molds.filter(created_date__month=num_mes).count()
+            trimmings_en_mes = trimmings.filter(created_date__month=num_mes).count()
+            total_en_mes = molds_en_mes + trimmings_en_mes
+            hist[mes] = total_en_mes
+
+
+
         return Response({
             # Completados (ambos tipos, cualquier usuario)
             'completados': {
@@ -57,4 +72,5 @@ class RFQGlobalCountView(APIView):
                 'trimmings': trimmings_en_ind,
                 'total':     total_en_ind,
             },
+            'histograma': hist
         })
