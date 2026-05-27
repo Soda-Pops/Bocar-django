@@ -1,5 +1,5 @@
 from django.db import models
-from Bocar import settings
+from Bocar.settings import AUTH_USER_MODEL
 from django_countries.fields import CountryField
 
 # Create your models here.
@@ -15,7 +15,7 @@ class Proveedor(models.Model):
     
     
     id_account = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
+        AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='proveedor'
     )
@@ -24,6 +24,7 @@ class Proveedor(models.Model):
     country = CountryField(blank=True, null=True)
     continent = models.CharField(max_length=2, choices=Continente.choices, default= 'NA') # en esto tengo dudas del default, o no se si se pueda identificar el continente por pais
     rating = models.FloatField(default=0.0)
+    
     class Meta:
         db_table = 'Proveedores'
         verbose_name = 'Proveedor'

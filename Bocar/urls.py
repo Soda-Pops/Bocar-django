@@ -19,6 +19,9 @@ urlpatterns = [
     # General endpoints -----------------------------------------------
     path('api_general/v1/', include('General.urls')),
 
+    # Proveedores ----------------------------------------------------
+    path('api_proveedores/v1/', include('Proveedores.urls')),
+
     # Esquema OpenAPI -------------------------------------------------
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     

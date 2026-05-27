@@ -40,3 +40,14 @@ class IsComercializacionAdmin(BasePermission):
             request.user.is_admin and
             request.user.role == 'Com'      # 'Com' es el value definido en CustomUser.Roles
         )
+    
+class IsComercializacionUser(BasePermission):
+
+    message = "Acceso denegado: se requiere ser del área de Comercialización."
+
+    def has_permission(self, request, view):
+        # El usuario debe estar autenticado, tener Y role='Com'
+        return (
+            request.user.is_authenticated and
+            request.user.role == 'Com'      # 'Com' es el value definido en CustomUser.Roles
+        )
