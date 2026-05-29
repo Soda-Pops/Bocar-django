@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'RFQ_Mold',
     'RFQ_Trimming',
     'Proveedores',
-    'General',
+    'General_RFQs',
     'Asignaciones',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',

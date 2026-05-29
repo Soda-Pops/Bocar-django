@@ -17,10 +17,11 @@ urlpatterns = [
     path('api_trimming/v1/', include('RFQ_Trimming.urls')),
 
     # General endpoints -----------------------------------------------
-    path('api_general/v1/', include('General.urls')),
+    path('api_general/v1/', include('General_RFQs.urls')),
 
     # Proveedores ----------------------------------------------------
     path('api_proveedores/v1/', include('Proveedores.urls')),
+    path('api_proveedores/v1/asginaciones/', include('Asignaciones.urls')),
 
     # Esquema OpenAPI -------------------------------------------------
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

@@ -1,13 +1,6 @@
 from rest_framework.permissions import BasePermission
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PERMISO 1: Solo usuarios con is_admin=True
-#
-# Usado en:
-#   - Borrado lógico de RFQ_Mold    → PATCH /rfq-molds/<id>/delete/
-#   - Borrado lógico de RFQ_Trimming → PATCH /rfq-trimmings/<id>/delete/
-# ─────────────────────────────────────────────────────────────────────────────
 class IsAdminUser(BasePermission):
 
     message = "Acceso denegado: se requiere ser administrador."
@@ -20,15 +13,6 @@ class IsAdminUser(BasePermission):
         )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PERMISO 2: Solo usuarios con role='Com' Y is_admin=True
-#
-# Usado en:
-#   - Ver solicitudes de edición pendientes de RFQ_Mold
-#   - Aprobar solicitudes de edición de RFQ_Mold
-#   - Ver solicitudes de edición pendientes de RFQ_Trimming
-#   - Aprobar solicitudes de edición de RFQ_Trimming
-# ─────────────────────────────────────────────────────────────────────────────
 class IsComercializacionAdmin(BasePermission):
 
     message = "Acceso denegado: se requiere ser administrador del área de Comercialización."
@@ -50,4 +34,17 @@ class IsComercializacionUser(BasePermission):
         return (
             request.user.is_authenticated and
             request.user.role == 'Com'      # 'Com' es el value definido en CustomUser.Roles
+        )
+    
+class IsProveedor(BasePermission):
+    """
+    Solo usuarios con role='Pro'.
+    Usado en: consulta de asignaciones propias del proveedor.
+    """
+    message = "Acceso denegado: se requiere ser un proveedor registrado."
+ 
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            request.user.role == 'Pro'
         )
