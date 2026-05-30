@@ -11,7 +11,7 @@ from .serializers import RFQTrimmingCreateSerializer, RFQTrimmingDetailSerialize
 
 # Importamos los permisos personalizados definidos en la app
 # Si los tienes en otra app ajusta el import: from apps.rfq_mold.permissions import ...
-from General.permissions import IsAdminUser, IsComercializacionAdmin
+from users.permissions import IsAdminUser, IsComercializacionAdmin
 
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION, ROL_COMERCIALIZACION

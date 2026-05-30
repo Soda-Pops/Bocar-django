@@ -10,7 +10,7 @@ from .models import RFQ_Mold, RFQ_Mold_EditRequest
 from .serializers import RFQMoldCreateSerializer, RFQMoldDetailSerializer, RFQMoldListSerializer, MoldEditRequestCreateSerializer, MoldEditRequestListSerializer, MoldEditRequestApproveSerializer
 
 # Permisos definidos en la app 'general'
-from General.permissions import IsAdminUser, IsComercializacionAdmin
+from users.permissions import IsAdminUser, IsComercializacionAdmin
 
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION, ROL_COMERCIALIZACION

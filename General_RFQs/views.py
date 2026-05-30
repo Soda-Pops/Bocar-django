@@ -66,7 +66,7 @@ class RFQGlobalCountView(APIView):
                 'total':     total_en_com,
             },
             # En Industrialización filtrado por usuario
-            'en_industrializacion_usuario': {
+            'borradores': {
                 'user_id':   user_id,
                 'molds':     molds_en_ind,
                 'trimmings': trimmings_en_ind,
