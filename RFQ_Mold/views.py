@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, JSONParser
 from django.db.models import Count
+from django.conf import settings
 
 from .models import RFQ_Mold, RFQ_Mold_EditRequest
 from .serializers import RFQMoldCreateSerializer, RFQMoldDetailSerializer, RFQMoldListSerializer, MoldEditRequestCreateSerializer, MoldEditRequestListSerializer, MoldEditRequestApproveSerializer
@@ -80,7 +81,10 @@ class RFQMoldLogicalDeleteView(UpdateAPIView):
 
         rfq.logical_delete = True
         rfq.save()
-        notif_tasks.notificar_cancelacion_confirmada.delay(rfq.id, 'mold', request.user.id)
+
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_cancelacion_confirmada.delay(rfq.id, 'mold', request.user.id)
+
         return Response(
             {'message': 'Registro eliminado correctamente.'},
             status=status.HTTP_200_OK
@@ -101,7 +105,8 @@ class MoldEditRequestCreateView(generics.CreateAPIView):
  
     def perform_create(self, serializer):
         instance = serializer.save(requested_by=self.request.user)
-        notif_tasks.notificar_modificacion_rfq.delay(instance.rfq_mold.id, 'mold', self.request.user.id, [ROL_COMERCIALIZACION])
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_modificacion_rfq.delay(instance.rfq_mold.id, 'mold', self.request.user.id, [ROL_COMERCIALIZACION])
 
 
 class MoldEditRequestListView(generics.ListAPIView):
@@ -139,5 +144,6 @@ class MoldEditRequestApproveView(UpdateAPIView):
         edit_request = self.get_object()
         rfq          = edit_request.rfq_mold
         response     = super().partial_update(request, *args, **kwargs)
-        notif_tasks.notificar_modificacion_rfq.delay(rfq.id, 'mold', request.user.id, [ROL_INDUSTRIALIZACION])
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_modificacion_rfq.delay(rfq.id, 'mold', request.user.id, [ROL_INDUSTRIALIZACION])
         return response

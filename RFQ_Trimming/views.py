@@ -15,7 +15,7 @@ from users.permissions import IsAdminUser, IsComercializacionAdmin
 
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION, ROL_COMERCIALIZACION
-from Bocar import settings
+from django.conf import settings
 
 class RFQTrimmingListCreateView(generics.ListCreateAPIView):
     """
@@ -104,7 +104,8 @@ class TrimmingEditRequestCreateView(generics.CreateAPIView):
  
     def perform_create(self, serializer):
         instance = serializer.save(requested_by=self.request.user)
-        notif_tasks.notificar_modificacion_rfq.delay(instance.rfq_trimming.id, 'trimming', self.request.user.id, [ROL_COMERCIALIZACION])
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_modificacion_rfq.delay(instance.rfq_trimming.id, 'trimming', self.request.user.id, [ROL_COMERCIALIZACION])
 
 
 class TrimmingEditRequestListView(generics.ListAPIView):
@@ -142,6 +143,7 @@ class TrimmingEditRequestApproveView(UpdateAPIView):
         edit_request = self.get_object()
         rfq          = edit_request.rfq_trimming
         response     = super().partial_update(request, *args, **kwargs)
-        notif_tasks.notificar_modificacion_rfq.delay(rfq.id, 'trimming', request.user.id, [ROL_INDUSTRIALIZACION])
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_modificacion_rfq.delay(rfq.id, 'trimming', request.user.id, [ROL_INDUSTRIALIZACION])
         return response
 

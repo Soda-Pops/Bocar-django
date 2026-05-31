@@ -175,10 +175,15 @@ STATIC_URL = 'static/'
 
 # ---------------------------------------------------------------------------
 # Email — Microsoft 365 (Office 365)
-# Para producción: cambiar EMAIL_BACKEND a 'django.core.mail.backends.smtp.EmailBackend'
-# y definir las variables de entorno BOCAR_EMAIL_USER y BOCAR_EMAIL_PASSWORD.
+# El backend se controla por la variable de entorno EMAIL_BACKEND.
+# Desarrollo (default): consola — los correos se imprimen, no se envían.
+# Producción: definir EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
+# junto con las variables BOCAR_EMAIL_USER y BOCAR_EMAIL_PASSWORD.
 # ---------------------------------------------------------------------------
-EMAIL_BACKEND       = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND       = os.environ.get(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend',
+)
 EMAIL_HOST          = 'smtp.office365.com'
 EMAIL_PORT          = 587
 EMAIL_USE_TLS       = True
@@ -198,4 +203,11 @@ CELERY_TIMEZONE          = TIME_ZONE
 
 
 
-NOTIFICATIONS_ENABLED = False ##cambair en produccion
+# ---------------------------------------------------------------------------
+# Flag de envío de correos — controlado por variable de entorno.
+# Permite activar/desactivar las notificaciones durante los tests sin tocar
+# código ni depender del broker de Celery. Acepta: True / true / 1 / yes.
+# Temporal: se eliminará cuando el servicio de correos quede activado de forma
+# permanente en producción.
+# ---------------------------------------------------------------------------
+NOTIFICATIONS_ENABLED = os.environ.get('NOTIFICATIONS_ENABLED', 'False').lower() in ('true', '1', 'yes')
