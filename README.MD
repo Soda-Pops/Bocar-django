@@ -61,35 +61,42 @@ El módulo `notificaciones/` envía correos automáticos vía **BCC** al ocurrir
 | `BOCAR_EMAIL_PASSWORD` | Contraseña de la cuenta | — |
 | `CELERY_BROKER_URL` | URL del broker RabbitMQ | `amqp://guest:guest@localhost:5672//` |
 
+### Configuración con archivo `.env` (recomendado)
+
+El proyecto carga automáticamente las variables de entorno desde un archivo `.env`
+en la raíz (vía `python-dotenv`, configurado en `Bocar/settings.py`). Es la forma
+recomendada: se define una sola vez y la leen tanto `runserver` como el worker de Celery.
+
+```bash
+# 1. Copiar la plantilla
+cp .env.example .env        # En PowerShell: Copy-Item .env.example .env
+
+# 2. Editar .env con los valores reales (credenciales, flag, backend, etc.)
+
+# 3. Levantar el proyecto normalmente — el .env se carga solo
+python manage.py runserver
+```
+
+> [!IMPORTANT]
+> El archivo `.env` **no se versiona** (está en `.gitignore`) porque contiene la
+> contraseña del correo. Sube únicamente `.env.example` como plantilla.
+
+Si no existe `.env`, el proyecto sigue funcionando con los valores por defecto
+(backend de consola, notificaciones apagadas). También puedes definir las variables
+directamente en el sistema/sesión (`export` en Linux/macOS, `$env:VAR` en PowerShell),
+y tendrán prioridad sobre el `.env`.
+
 ### Puesta en marcha
 
 ```bash
-# 1. Instalar dependencias de Celery
-pip install celery[librabbitmq]
+# 1. Instalar dependencias (incluye python-dotenv y Celery)
+pip install python-dotenv celery[librabbitmq]
 
 # 2. Levantar RabbitMQ (Management UI en http://localhost:15672)
 docker run -p 5672:5672 -p 15672:15672 rabbitmq:management
 
 # 3. Correr el worker en una terminal separada
 celery -A Bocar worker --loglevel=info
-```
-
-En **producción** ya no se edita `settings.py`: basta con definir las variables de entorno.
-
-```bash
-# Linux/macOS
-export NOTIFICATIONS_ENABLED=True
-export EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-export BOCAR_EMAIL_USER=correo@dominio.com
-export BOCAR_EMAIL_PASSWORD=********
-```
-
-```powershell
-# Windows PowerShell
-$env:NOTIFICATIONS_ENABLED = "True"
-$env:EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-$env:BOCAR_EMAIL_USER = "correo@dominio.com"
-$env:BOCAR_EMAIL_PASSWORD = "********"
 ```
 
 ### Tests

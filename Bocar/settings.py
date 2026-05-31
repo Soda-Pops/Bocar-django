@@ -14,8 +14,15 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Carga las variables de entorno definidas en el archivo .env (en la raíz del
+# proyecto). Si el archivo no existe, no falla: se usan los valores por defecto
+# o las variables ya presentes en el entorno del sistema.
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
