@@ -6,6 +6,12 @@ from RFQ_Mold.models import RFQ_Mold
 from RFQ_Trimming.models import RFQ_Trimming
 
 
+class ExtensionStatus(models.TextChoices):
+    PENDIENTE = 'Pendiente', 'Pendiente'
+    APROBADA  = 'Aprobada',  'Aprobada'
+    RECHAZADA = 'Rechazada', 'Rechazada'
+
+
 class Asignacion_Proveedor_Mold(models.Model):
 
     id_RFQ_Mold              = models.ForeignKey(RFQ_Mold, on_delete=models.CASCADE, related_name='asignaciones')
@@ -82,3 +88,71 @@ class Asignacion_Proveedor_Trimming(models.Model):
         db_table            = 'Asignacion_Proveedor_Trimming'
         verbose_name        = 'Asignación Proveedor Trimming'
         verbose_name_plural = 'Asignaciones Proveedor Trimming'
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SOLICITUDES DE EXTENSIÓN DE TIEMPO
+# ─────────────────────────────────────────────────────────────────────────────
+
+class SolicitudExtensionMold(models.Model):
+
+    id_asignacion = models.ForeignKey(
+        Asignacion_Proveedor_Mold,
+        on_delete=models.CASCADE,
+        related_name='solicitudes_extension',
+    )
+    motivo        = models.TextField()
+    nueva_fecha   = models.DateField()
+    status        = models.CharField(
+        max_length=10,
+        choices=ExtensionStatus.choices,
+        default=ExtensionStatus.PENDIENTE,
+    )
+    solicitada_at = models.DateTimeField(auto_now_add=True)
+    revisada_por  = models.ForeignKey(
+        AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='extensiones_mold_revisadas',
+    )
+    revisada_at   = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'ExtensionMold {self.id} - Asignacion {self.id_asignacion_id} [{self.status}]'
+
+    class Meta:
+        db_table            = 'Solicitud_Extension_Mold'
+        verbose_name        = 'Solicitud de Extensión Mold'
+        verbose_name_plural = 'Solicitudes de Extensión Mold'
+
+
+class SolicitudExtensionTrimming(models.Model):
+
+    id_asignacion = models.ForeignKey(
+        Asignacion_Proveedor_Trimming,
+        on_delete=models.CASCADE,
+        related_name='solicitudes_extension',
+    )
+    motivo        = models.TextField()
+    nueva_fecha   = models.DateField()
+    status        = models.CharField(
+        max_length=10,
+        choices=ExtensionStatus.choices,
+        default=ExtensionStatus.PENDIENTE,
+    )
+    solicitada_at = models.DateTimeField(auto_now_add=True)
+    revisada_por  = models.ForeignKey(
+        AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='extensiones_trimming_revisadas',
+    )
+    revisada_at   = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'ExtensionTrimming {self.id} - Asignacion {self.id_asignacion_id} [{self.status}]'
+
+    class Meta:
+        db_table            = 'Solicitud_Extension_Trimming'
+        verbose_name        = 'Solicitud de Extensión Trimming'
+        verbose_name_plural = 'Solicitudes de Extensión Trimming'

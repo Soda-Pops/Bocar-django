@@ -1,37 +1,31 @@
-from django.db import  models
-from Bocar import settings
-# Create your  models.FloatField(default= 0.0)here.
-class Cost_Breakdown_Mold( models.Model):
+from django.db import models
+from django.conf import settings
+from Asignaciones.models import Asignacion_Proveedor_Mold
 
-    ##LO QUE ESTA COMENTADO ME LO DIO CLAUDE EN BASE A LO QUE PUSIMOS EN LA BASE JAJAJAJ
 
-    #id_asignacion =  models.FloatField(default= 0.0)ForeignKey(
-        #Asignacion_Proveedores,
-        #on_delete= models.FloatField(default= 0.0)CASCADE,
-      # related_name='cost_breakdowns'
-   # default= 0.0)
-    #id_set_of_cavities =  models.FloatField(default= 0.0)ForeignKey(
-      #  Set_of_Cavities_Mold,
-      #  on_delete= models.FloatField(default= 0.0)SET_NULL,
-      #  null=True, blank=True,
-       # related_name='cost_breakdowns'
-   # default= 0.0)
-  #  last_edited_by =  models.FloatField(default= 0.0)ForeignKey(
-      #  settings.AUTH_USER_MODEL,
-     #   on_delete= models.FloatField(default= 0.0)SET_NULL,
-        #null=True, blank=True
-   # default= 0.0)
-  #  last_change =  models.FloatField(default= 0.0)DateTimeField(auto_now=Truedefault= 0.0)
+class Cost_Breakdown_Mold(models.Model):
 
-   # class Currency( models.FloatField(default= 0.0)TextChoicesdefault= 0.0):
-     #   USD = 'USD', 'USD'
-      #  EUR = 'EUR', 'EUR'
+    class Currency(models.TextChoices):
+        USD = 'USD', 'USD'
+        EUR = 'EUR', 'EUR'
 
-   # base_currency_exchange_rate =  models.FloatField(default= 0.0)CharField(
-      #  max_length=10,
-      #  choices=Currency.choices,
-       # default=Currency.USD
-    #default= 0.0)
+    id_asignacion = models.OneToOneField(
+        Asignacion_Proveedor_Mold,
+        on_delete=models.CASCADE,
+        related_name='cost_breakdown',
+    )
+    last_edited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='cost_breakdowns_mold',
+    )
+    last_change                 = models.DateTimeField(auto_now=True)
+    base_currency_exchange_rate = models.CharField(
+        max_length=10,
+        choices=Currency.choices,
+        default=Currency.USD,
+    )
 
     # ----------------------------------
     # ACCESSORIES COSTS
@@ -385,17 +379,12 @@ class Cost_Breakdown_Mold( models.Model):
 
 class Set_of_Cavities_Mold(models.Model):
 
-    #id_asignacion = models.ForeignKey(
-      #  Asignacion_Proveedores,
-       # on_delete=models.CASCADE,
-      #  related_name='set_of_cavities'
-  #  default= 0.0)
-  #  last_edited_by = models.ForeignKey(
-      #  settings.AUTH_USER_MODEL,
-      #  on_delete=models.SET_NULL,
-      #  null=True, blank=True
-  #  default= 0.0)
-   # last_change = models.DateTimeField(auto_now=Truedefault= 0.0)
+    id_cost_breakdown = models.OneToOneField(
+        Cost_Breakdown_Mold,
+        on_delete=models.CASCADE,
+        related_name='set_of_cavities',
+        null=True, blank=True,
+    )
 
     # 13.- ACCESSORIES COSTS
     soc_accs_jet_cooling_unit             = models.FloatField(default= 0.0)
@@ -624,7 +613,7 @@ class Set_of_Cavities_Mold(models.Model):
     soc_sp_grand_total_weeks                  = models.FloatField(default= 0.0)
 
     def __str__(self):
-        return f'Set of Cavities - Asignacion {self.id_asignacion_id}'
+        return f'Set of Cavities - Cost Breakdown {self.id_cost_breakdown_id}'
 
     class Meta:
         db_table = 'Set_of_Cavities_Mold'
