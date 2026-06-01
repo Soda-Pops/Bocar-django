@@ -2,7 +2,7 @@
 
 from django.db import models
 from django.conf import settings
-#from RFQ_model.models import Asignacion_Proveedores
+from Asignaciones.models import Asignacion_Proveedor_Trimming
 
 
 def float_field():
@@ -30,17 +30,17 @@ class Cost_Breakdown_Trimming(models.Model):
         USD = 'USD', 'USD'
         EUR = 'EUR', 'EUR'
 
-    # Info General
-    #id_asignacion = models.ForeignKey(
-    #    Asignacion_Proveedores,
-     #    on_delete=models.CASCADE,
-      #   related_name='cost_breakdowns_trimming'
-    # )
-   #  last_edited_by = models.ForeignKey(
-     #    settings.AUTH_USER_MODEL,
-      #   on_delete=models.SET_NULL,
-       #  null=True, blank=True
-    # )
+    id_asignacion = models.OneToOneField(
+        Asignacion_Proveedor_Trimming,
+        on_delete=models.CASCADE,
+        related_name='cost_breakdown',
+    )
+    last_edited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='cost_breakdowns_trimming',
+    )
     last_change                 = models.DateTimeField(auto_now=True)
     base_currency_exchange_rate = models.CharField(
                                     max_length=10,
@@ -303,6 +303,7 @@ class Cost_Breakdown_Trimming(models.Model):
 
     def __str__(self):
         return f'Cost Breakdown Trimming - Asignacion {self.id_asignacion_id}'
+
 
     class Meta:
         db_table = 'Cost_Breakdown_Trimming'
