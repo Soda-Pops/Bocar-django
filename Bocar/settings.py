@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'Prov_RFQ_Mold',
     'Prov_RFQ_Trimming',
     'Comercializacion',
+    'Industrializacion',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
