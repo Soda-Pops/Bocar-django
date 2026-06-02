@@ -26,6 +26,9 @@ urlpatterns = [
     # Comercialización -----------------------------------------------
     path('api_comercializacion/v1/', include('Comercializacion.urls')),
 
+    # Industrialización ----------------------------------------------
+    path('api_industrializacion/v1/', include('Industrializacion.urls')),
+
     # Esquema OpenAPI -------------------------------------------------
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     

@@ -9,6 +9,10 @@ class Cost_Breakdown_Mold(models.Model):
         USD = 'USD', 'USD'
         EUR = 'EUR', 'EUR'
 
+    class Status(models.TextChoices):
+        DRAFT     = 'draft',     'Borrador'
+        SUBMITTED = 'submitted', 'Enviado'
+
     id_asignacion = models.OneToOneField(
         Asignacion_Proveedor_Mold,
         on_delete=models.CASCADE,
@@ -21,6 +25,11 @@ class Cost_Breakdown_Mold(models.Model):
         related_name='cost_breakdowns_mold',
     )
     last_change                 = models.DateTimeField(auto_now=True)
+    status                      = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.DRAFT,
+    )
     base_currency_exchange_rate = models.CharField(
         max_length=10,
         choices=Currency.choices,

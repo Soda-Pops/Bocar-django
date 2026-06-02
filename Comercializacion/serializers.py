@@ -2,6 +2,7 @@ from datetime import date, datetime, timezone
 from rest_framework import serializers
 from RFQ_Mold.models import RFQ_Mold
 from RFQ_Trimming.models import RFQ_Trimming
+from Proveedores.models import Proveedor
 
 
 def _calcular_deadline(due_date):
@@ -123,3 +124,23 @@ class RFQTrimmingComercializacionSerializer(serializers.ModelSerializer):
             'creado_por',
             'progreso_proveedores',
         ]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CREAR ASIGNACIONES
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CrearAsignacionesSerializer(serializers.Serializer):
+    id_rfq      = serializers.IntegerField()
+    due_date    = serializers.DateField()
+    proveedores = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1,
+    )
+
+    def validate_due_date(self, value):
+        if value <= date.today():
+            raise serializers.ValidationError(
+                'El due_date debe ser una fecha futura.'
+            )
+        return value

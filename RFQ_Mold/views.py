@@ -64,9 +64,9 @@ class RFQMoldLogicalDeleteView(UpdateAPIView):
     Marca el RFQ Mold como eliminado (logical_delete=True).
     El registro NO se borra físicamente de la base de datos.
     Retorna error si el registro ya estaba marcado como eliminado.
-    Requiere: is_admin=True.
+    Requiere: is_admin=True y role='Com'.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsComercializacionAdmin]
     queryset           = RFQ_Mold.objects.all()
     http_method_names  = ['patch']
  
