@@ -224,6 +224,9 @@ class CrearAsignacionesView(APIView):
                 rfq.status = RFQ_Trimming.Status.PROVEEDOR
                 rfq.save(update_fields=['status'])
 
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_proveedores.delay(rfq.id, tipo)
+
         return Response(
             {'detail': 'Asignaciones procesadas correctamente.'},
             status=status.HTTP_200_OK,

@@ -1,9 +1,11 @@
 from datetime import date
 
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from users.permissions import IsProveedor, IsComercializacionUser
+from notificaciones import tasks as notif_tasks
 from .models import (
     Asignacion_Proveedor_Mold,
     Asignacion_Proveedor_Trimming,
@@ -399,6 +401,10 @@ class AsignacionEnviarRespuestaView(APIView):
 
         asignacion.is_answered = True
         asignacion.save(update_fields=['is_answered'])
+
+        if settings.NOTIFICATIONS_ENABLED:
+            rfq = asignacion.id_RFQ_Mold if tipo == 'mold' else asignacion.id_RFQ_Trimming
+            notif_tasks.notificar_cotizacion_recibida.delay(rfq.id, tipo, request.user.id)
 
         return Response({'detail': 'Respuesta enviada correctamente.'}, status=status.HTTP_200_OK)
 

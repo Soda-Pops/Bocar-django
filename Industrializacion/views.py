@@ -286,6 +286,9 @@ class RFQEnviarAComercializacionView(APIView):
             rfq.status = RFQ_Trimming.Status.COMERCIALIZACION
             rfq.save(update_fields=['status'])
 
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_comercializacion.delay(rfq.id, tipo)
+
         return Response(
             {'detail': f'RFQ {tipo.capitalize()} enviado a Comercialización correctamente.'},
             status=status.HTTP_200_OK,

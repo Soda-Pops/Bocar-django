@@ -41,15 +41,19 @@ El módulo `notificaciones/` envía correos automáticos vía **BCC** al ocurrir
 
 | Evento | Destinatarios (BCC) | Estado |
 |--------|---------------------|--------|
+| RFQ enviada a revisión (avance a `En_Com`) | Comercialización | Conectado — `Industrializacion` (enviar a Comercialización) |
+| RFQ enviada a proveedores (`En_Pro`) | Proveedor | Conectado — `Comercializacion` (crear asignaciones) |
+| Cotización recibida | Comercialización | Conectado — `Asignaciones` (proveedor envía respuesta) |
 | RFQ regresada a Industrialización (solicitud y aprobación de edición) | Comercialización / Industrialización | Conectado |
 | RFQ eliminada lógicamente | Industrialización + Comercialización | Conectado |
-| RFQ enviada a revisión (avance a `En_Com`) | Comercialización | Pendiente — falta el endpoint que avance el status |
-| RFQ enviada a proveedores (`En_Pro`) | Proveedor | Pendiente — falta el flujo de asignación a proveedores |
-| Cotización recibida | Comercialización | Pendiente — falta el endpoint de submission de cotización |
 | Solicitud de cancelación | Admins (`is_admin=True`) | Pendiente — el borrado lógico hoy es directo, no hay flujo de solicitud |
 
-> Las funciones de notificación de los eventos pendientes ya existen en `notificaciones/services.py`
-> y `notificaciones/tasks.py`; solo falta construir el endpoint/flujo de negocio que las dispare.
+> El único evento pendiente (`notificar_cancelacion_solicitada`) ya tiene su función en
+> `notificaciones/services.py` y `notificaciones/tasks.py`; falta construir el flujo de *solicitud*
+> de cancelación (modelo/endpoint) que la dispare.
+>
+> Todas las notificaciones se disparan condicionadas a la variable de entorno
+> `NOTIFICATIONS_ENABLED` (ver más abajo).
 
 ### Variables de entorno
 
@@ -105,4 +109,11 @@ celery -A Bocar worker --loglevel=info
 python manage.py test notificaciones
 ```
 
-Cubre: lógica de BCC/TO en `_enviar`, filtrado de destinatarios por rol, casos sin destinatarios, y ejecución de tareas Celery (15 tests, sin broker requerido).
+Cubre (19 tests, sin broker requerido):
+- Lógica de BCC/TO en `_enviar`, filtrado de destinatarios por rol y casos sin destinatarios.
+- Ejecución de las tareas Celery con `.apply()` (síncrono).
+- **Integración por endpoint:** que cada vista de avance de flujo encole su tarea con
+  `NOTIFICATIONS_ENABLED=True` y **no** la encole con el flag apagado:
+  - `Industrializacion` enviar a Comercialización → `notificar_comercializacion`
+  - `Comercializacion` crear asignaciones → `notificar_proveedores`
+  - `Asignaciones` enviar respuesta → `notificar_cotizacion_recibida`
