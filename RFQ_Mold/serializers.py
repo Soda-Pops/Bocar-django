@@ -46,6 +46,16 @@ class RFQMoldCreateSerializer(serializers.ModelSerializer):
         for archivo in archivos:
             RFQ_Mold_File.objects.create(rfq_mold=rfq_mold, archivo=archivo)
 
+        from historial.models import RFQHistorial
+        from historial.services import registrar_historial
+        registrar_historial(
+            rfq_tipo     = RFQHistorial.Tipo.MOLD,
+            rfq_id       = rfq_mold.id,
+            evento       = RFQHistorial.Evento.CREACION,
+            actor        = rfq_mold.created_by,
+            status_nuevo = rfq_mold.status,
+        )
+
         return rfq_mold
 
 
@@ -113,6 +123,20 @@ class MoldEditRequestCreateSerializer(serializers.ModelSerializer):
             )
         return rfq_mold
 
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+
+        from historial.models import RFQHistorial
+        from historial.services import registrar_historial
+        registrar_historial(
+            rfq_tipo = RFQHistorial.Tipo.MOLD,
+            rfq_id   = instance.rfq_mold_id,
+            evento   = RFQHistorial.Evento.SOLICITUD_EDICION,
+            actor    = instance.requested_by,
+            detalle  = {'motivo': instance.reason},
+        )
+        return instance
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 5. SOLICITUD DE EDICIÓN — LISTA
@@ -161,7 +185,19 @@ class MoldEditRequestApproveSerializer(serializers.ModelSerializer):
         instance.save()
 
         # Cambiamos el RFQ de En_Com a En_Ind
+        status_anterior = instance.rfq_mold.status
         instance.rfq_mold.status = RFQ_Mold.Status.INDUSTRIALIZACION
         instance.rfq_mold.save()
+
+        from historial.models import RFQHistorial
+        from historial.services import registrar_historial
+        registrar_historial(
+            rfq_tipo        = RFQHistorial.Tipo.MOLD,
+            rfq_id          = instance.rfq_mold_id,
+            evento          = RFQHistorial.Evento.EDICION_APROBADA,
+            actor           = instance.reviewed_by,
+            status_anterior = status_anterior,
+            status_nuevo    = RFQ_Mold.Status.INDUSTRIALIZACION,
+        )
 
         return instance

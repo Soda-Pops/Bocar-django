@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'django_countries',
     'notificaciones',
+    'historial',
 ]
 
 REST_FRAMEWORK = {
