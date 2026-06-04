@@ -22,3 +22,6 @@ static/
 
 *.rfq_mold/
 *.rfq_trimming/
+
+graphify-out/cost.json 
+graphify-out/cache/ 
