@@ -1,0 +1,712 @@
+{
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\__init__.py": {
+    "mtime": 1779853756.2779076,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\admin.py": {
+    "mtime": 1779855580.4050064,
+    "ast_hash": "f3b1dbe80cb7029b7c25f2f77b601f42",
+    "semantic_hash": "f3b1dbe80cb7029b7c25f2f77b601f42"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\apps.py": {
+    "mtime": 1779853756.2728536,
+    "ast_hash": "cf8e9b32e6415733179807c162e706c0",
+    "semantic_hash": "cf8e9b32e6415733179807c162e706c0"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\migrations\\0001_initial.py": {
+    "mtime": 1779855405.4692209,
+    "ast_hash": "7c4096152608e4f61dad0cbcfb48228a",
+    "semantic_hash": "7c4096152608e4f61dad0cbcfb48228a"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\migrations\\0002_solicitudextensionmold_solicitudextensiontrimming.py": {
+    "mtime": 1780289942.5279922,
+    "ast_hash": "5eef40c023858606f9bcd426d4bba085",
+    "semantic_hash": "5eef40c023858606f9bcd426d4bba085"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\migrations\\__init__.py": {
+    "mtime": 1779853756.280131,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\models.py": {
+    "mtime": 1780289734.3995624,
+    "ast_hash": "c6f89fb1dfc579524ba8f402db42b42e",
+    "semantic_hash": "c6f89fb1dfc579524ba8f402db42b42e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\serializers.py": {
+    "mtime": 1780553889.4407406,
+    "ast_hash": "a29048dceba603dab790986b1e74a5cf",
+    "semantic_hash": "a29048dceba603dab790986b1e74a5cf"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\tests.py": {
+    "mtime": 1779853756.2763202,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\urls.py": {
+    "mtime": 1780394138.348176,
+    "ast_hash": "6ddbe7d1da41fdb23404d9b1c63650bf",
+    "semantic_hash": "6ddbe7d1da41fdb23404d9b1c63650bf"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Asignaciones\\views.py": {
+    "mtime": 1780553889.4412441,
+    "ast_hash": "12b69707161a01c8d568efd9feec0fd6",
+    "semantic_hash": "12b69707161a01c8d568efd9feec0fd6"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Bocar\\__init__.py": {
+    "mtime": 1779656459.0705788,
+    "ast_hash": "5154ea209ac8daa66ff28761c30a2625",
+    "semantic_hash": "5154ea209ac8daa66ff28761c30a2625"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Bocar\\asgi.py": {
+    "mtime": 1779001907.4009733,
+    "ast_hash": "fdf068f4e847ab86c0f6f2c83ccb11c6",
+    "semantic_hash": "fdf068f4e847ab86c0f6f2c83ccb11c6"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Bocar\\celery.py": {
+    "mtime": 1779656459.0705788,
+    "ast_hash": "7a07fa7796793d68b59eec415601dff7",
+    "semantic_hash": "7a07fa7796793d68b59eec415601dff7"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Bocar\\settings.py": {
+    "mtime": 1780553889.4417813,
+    "ast_hash": "eefbc3bb290775ca2b778c3022cb5f9f",
+    "semantic_hash": "eefbc3bb290775ca2b778c3022cb5f9f"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Bocar\\urls.py": {
+    "mtime": 1780553889.4423,
+    "ast_hash": "34fce0273c3705f53e5fa62bdfd8e896",
+    "semantic_hash": "34fce0273c3705f53e5fa62bdfd8e896"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Bocar\\wsgi.py": {
+    "mtime": 1779001907.4019754,
+    "ast_hash": "eed851a685dc37925b2eeb18f37420ec",
+    "semantic_hash": "eed851a685dc37925b2eeb18f37420ec"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Comercializacion\\__init__.py": {
+    "mtime": 1780289828.8484633,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Comercializacion\\admin.py": {
+    "mtime": 1780289828.8402522,
+    "ast_hash": "ef4c241c5311eee11a93e9366f492a72",
+    "semantic_hash": "ef4c241c5311eee11a93e9366f492a72"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Comercializacion\\apps.py": {
+    "mtime": 1780289828.843252,
+    "ast_hash": "3fc5beacfdbc80ae35a761fe2e3eac98",
+    "semantic_hash": "3fc5beacfdbc80ae35a761fe2e3eac98"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Comercializacion\\migrations\\__init__.py": {
+    "mtime": 1780289828.8514729,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Comercializacion\\models.py": {
+    "mtime": 1780289828.844817,
+    "ast_hash": "d66d26e53e7ac2028454d3dd6f7e92ad",
+    "semantic_hash": "d66d26e53e7ac2028454d3dd6f7e92ad"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Comercializacion\\serializers.py": {
+    "mtime": 1780383031.2712135,
+    "ast_hash": "3315ab15757b3c848f8970fa03fccc79",
+    "semantic_hash": "3315ab15757b3c848f8970fa03fccc79"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Comercializacion\\tests.py": {
+    "mtime": 1780289828.845824,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Comercializacion\\urls.py": {
+    "mtime": 1780393006.3014314,
+    "ast_hash": "abe66a0c11c2ebe245b3c30bb541ac36",
+    "semantic_hash": "abe66a0c11c2ebe245b3c30bb541ac36"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Comercializacion\\views.py": {
+    "mtime": 1780553889.4433465,
+    "ast_hash": "5d44d78a29698b5b87839ea1e8616307",
+    "semantic_hash": "5d44d78a29698b5b87839ea1e8616307"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\General_RFQs\\__init__.py": {
+    "mtime": 1780081474.6680696,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\General_RFQs\\admin.py": {
+    "mtime": 1780081474.6621923,
+    "ast_hash": "ef4c241c5311eee11a93e9366f492a72",
+    "semantic_hash": "ef4c241c5311eee11a93e9366f492a72"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\General_RFQs\\apps.py": {
+    "mtime": 1780081474.664334,
+    "ast_hash": "e1aa4893f10507065f4b932fef532ede",
+    "semantic_hash": "e1aa4893f10507065f4b932fef532ede"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\General_RFQs\\migrations\\__init__.py": {
+    "mtime": 1780081474.6691394,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\General_RFQs\\models.py": {
+    "mtime": 1780081474.6654236,
+    "ast_hash": "d66d26e53e7ac2028454d3dd6f7e92ad",
+    "semantic_hash": "d66d26e53e7ac2028454d3dd6f7e92ad"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\General_RFQs\\tests.py": {
+    "mtime": 1780081474.6664865,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\General_RFQs\\urls.py": {
+    "mtime": 1780081506.6029572,
+    "ast_hash": "a44f598edf3ad480fa182298d9a68a3e",
+    "semantic_hash": "a44f598edf3ad480fa182298d9a68a3e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\General_RFQs\\views.py": {
+    "mtime": 1780081495.3552294,
+    "ast_hash": "263aee05104e9591c17892efbaf6fd87",
+    "semantic_hash": "263aee05104e9591c17892efbaf6fd87"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Industrializacion\\__init__.py": {
+    "mtime": 1780383267.4907527,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Industrializacion\\admin.py": {
+    "mtime": 1780383267.4854994,
+    "ast_hash": "ef4c241c5311eee11a93e9366f492a72",
+    "semantic_hash": "ef4c241c5311eee11a93e9366f492a72"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Industrializacion\\apps.py": {
+    "mtime": 1780383267.487602,
+    "ast_hash": "89a0a08dc2286da5073a13b62c57d96b",
+    "semantic_hash": "89a0a08dc2286da5073a13b62c57d96b"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Industrializacion\\migrations\\__init__.py": {
+    "mtime": 1780383267.4923325,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Industrializacion\\models.py": {
+    "mtime": 1780383267.488656,
+    "ast_hash": "d66d26e53e7ac2028454d3dd6f7e92ad",
+    "semantic_hash": "d66d26e53e7ac2028454d3dd6f7e92ad"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Industrializacion\\tests.py": {
+    "mtime": 1780383267.489178,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Industrializacion\\urls.py": {
+    "mtime": 1780385755.5936542,
+    "ast_hash": "34d5ff3beccde35d7d932d1bef907062",
+    "semantic_hash": "34d5ff3beccde35d7d932d1bef907062"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Industrializacion\\views.py": {
+    "mtime": 1780553889.4438808,
+    "ast_hash": "8f5aaf7a28334150afbb7a39fd06ecc0",
+    "semantic_hash": "8f5aaf7a28334150afbb7a39fd06ecc0"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Mold\\__init__.py": {
+    "mtime": 1779252203.2290733,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Mold\\admin.py": {
+    "mtime": 1779252203.229617,
+    "ast_hash": "ef4c241c5311eee11a93e9366f492a72",
+    "semantic_hash": "ef4c241c5311eee11a93e9366f492a72"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Mold\\apps.py": {
+    "mtime": 1779252203.229617,
+    "ast_hash": "2c907d97aff8b2ecc80d2b67f0658078",
+    "semantic_hash": "2c907d97aff8b2ecc80d2b67f0658078"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Mold\\migrations\\0001_initial.py": {
+    "mtime": 1780264878.1578505,
+    "ast_hash": "f593d9b6bc13b357426d240e6eacd4ff",
+    "semantic_hash": "f593d9b6bc13b357426d240e6eacd4ff"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Mold\\migrations\\0002_cost_breakdown_mold_status.py": {
+    "mtime": 1780394259.1190505,
+    "ast_hash": "ebec0bf0ac4510c366d52515c2859906",
+    "semantic_hash": "ebec0bf0ac4510c366d52515c2859906"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Mold\\migrations\\__init__.py": {
+    "mtime": 1779252203.230142,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Mold\\models.py": {
+    "mtime": 1780393979.50317,
+    "ast_hash": "4b3d5886c87334de2f1e81bacbb84731",
+    "semantic_hash": "4b3d5886c87334de2f1e81bacbb84731"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Mold\\tests.py": {
+    "mtime": 1779252203.2311976,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Mold\\views.py": {
+    "mtime": 1779252203.231735,
+    "ast_hash": "1b404a794ebb7b2a80ea56ac3c7b824b",
+    "semantic_hash": "1b404a794ebb7b2a80ea56ac3c7b824b"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Trimming\\__init__.py": {
+    "mtime": 1779252203.2322617,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Trimming\\admin.py": {
+    "mtime": 1779252203.2322617,
+    "ast_hash": "ef4c241c5311eee11a93e9366f492a72",
+    "semantic_hash": "ef4c241c5311eee11a93e9366f492a72"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Trimming\\apps.py": {
+    "mtime": 1779252203.2327874,
+    "ast_hash": "b07d36a890749459e3d873d7cbb894a9",
+    "semantic_hash": "b07d36a890749459e3d873d7cbb894a9"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Trimming\\migrations\\0001_initial.py": {
+    "mtime": 1780264878.1723924,
+    "ast_hash": "0bfcbcc6273a5e272ae884f145eef8be",
+    "semantic_hash": "0bfcbcc6273a5e272ae884f145eef8be"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Trimming\\migrations\\0002_cost_breakdown_trimming_status.py": {
+    "mtime": 1780394259.1200564,
+    "ast_hash": "5002c48e515415025e65806f62aa2cf3",
+    "semantic_hash": "5002c48e515415025e65806f62aa2cf3"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Trimming\\migrations\\__init__.py": {
+    "mtime": 1779252203.23332,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Trimming\\models.py": {
+    "mtime": 1780393988.7763867,
+    "ast_hash": "74e25256569cfb4fd3d8d2baee950083",
+    "semantic_hash": "74e25256569cfb4fd3d8d2baee950083"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Trimming\\tests.py": {
+    "mtime": 1779252203.2338305,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Prov_RFQ_Trimming\\views.py": {
+    "mtime": 1779252203.2343514,
+    "ast_hash": "1b404a794ebb7b2a80ea56ac3c7b824b",
+    "semantic_hash": "1b404a794ebb7b2a80ea56ac3c7b824b"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\__init__.py": {
+    "mtime": 1779307264.3231406,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\admin.py": {
+    "mtime": 1779307264.3241415,
+    "ast_hash": "e5ffe1beeb3767a7f7810f18154cab9a",
+    "semantic_hash": "e5ffe1beeb3767a7f7810f18154cab9a"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\apps.py": {
+    "mtime": 1779307264.3241415,
+    "ast_hash": "243e5d4d44980e8ba29ee8c574838d25",
+    "semantic_hash": "243e5d4d44980e8ba29ee8c574838d25"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\migrations\\0001_initial.py": {
+    "mtime": 1779307264.3241415,
+    "ast_hash": "a67b6657303dfd06719f3beb787ca2b4",
+    "semantic_hash": "a67b6657303dfd06719f3beb787ca2b4"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\migrations\\0002_alter_proveedor_rating.py": {
+    "mtime": 1779307264.3251412,
+    "ast_hash": "c1ef49f85b5bb071aa7c186b9d5c236e",
+    "semantic_hash": "c1ef49f85b5bb071aa7c186b9d5c236e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\migrations\\0003_alter_proveedor_options_and_more.py": {
+    "mtime": 1779307264.3251412,
+    "ast_hash": "a27381a4234855b359ff1ccfcfa62b0a",
+    "semantic_hash": "a27381a4234855b359ff1ccfcfa62b0a"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\migrations\\0004_alter_proveedor_country.py": {
+    "mtime": 1779307264.3261404,
+    "ast_hash": "41c6c39b2b170b2708014cbcdebe6566",
+    "semantic_hash": "41c6c39b2b170b2708014cbcdebe6566"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\migrations\\0005_alter_proveedor_rating.py": {
+    "mtime": 1779656459.0747797,
+    "ast_hash": "11a446858dcaea5e10b987a5663b073d",
+    "semantic_hash": "11a446858dcaea5e10b987a5663b073d"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\migrations\\__init__.py": {
+    "mtime": 1779307264.3261404,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\models.py": {
+    "mtime": 1779854647.9809983,
+    "ast_hash": "110f7188d160a86278d2332c15bc657c",
+    "semantic_hash": "110f7188d160a86278d2332c15bc657c"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\serializers.py": {
+    "mtime": 1779917340.8971655,
+    "ast_hash": "a310d2cfe3f0598b2cd90beb35c36854",
+    "semantic_hash": "a310d2cfe3f0598b2cd90beb35c36854"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\tests.py": {
+    "mtime": 1779307264.3261404,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\urls.py": {
+    "mtime": 1779917423.6174006,
+    "ast_hash": "8e461090f17945fee2e33a7a358f4852",
+    "semantic_hash": "8e461090f17945fee2e33a7a358f4852"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\Proveedores\\views.py": {
+    "mtime": 1779919758.3332486,
+    "ast_hash": "d6d6cf289454b71c9d145e1e88237c30",
+    "semantic_hash": "d6d6cf289454b71c9d145e1e88237c30"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\__init__.py": {
+    "mtime": 1779001907.4019754,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\admin.py": {
+    "mtime": 1779004710.4243677,
+    "ast_hash": "c1e91abccd25da80de73a8c2d10a11a0",
+    "semantic_hash": "c1e91abccd25da80de73a8c2d10a11a0"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\apps.py": {
+    "mtime": 1779001907.4029734,
+    "ast_hash": "94b12bb3c98d778f027ea86d65ea5b14",
+    "semantic_hash": "94b12bb3c98d778f027ea86d65ea5b14"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\migrations\\0001_initial.py": {
+    "mtime": 1779001907.4029734,
+    "ast_hash": "cdeca92fd52be0fe3c38d31e8ca1c8fb",
+    "semantic_hash": "cdeca92fd52be0fe3c38d31e8ca1c8fb"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\migrations\\0002_alter_rfq_mold_no_cav_alter_rfq_mold_no_ofhs_and_more.py": {
+    "mtime": 1779001907.4029734,
+    "ast_hash": "2f838cf2e9c1eb0c9550716d1d424dce",
+    "semantic_hash": "2f838cf2e9c1eb0c9550716d1d424dce"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\migrations\\0003_alter_rfq_mold_options_alter_rfq_mold_cust_and_more.py": {
+    "mtime": 1779252203.2349017,
+    "ast_hash": "a822d94285cbb18af5fb1fa485b30d5b",
+    "semantic_hash": "a822d94285cbb18af5fb1fa485b30d5b"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\migrations\\0004_rfq_mold_editrequest.py": {
+    "mtime": 1779656459.0763535,
+    "ast_hash": "b4923aeb69af99d74437f31671fd7c12",
+    "semantic_hash": "b4923aeb69af99d74437f31671fd7c12"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\migrations\\0005_alter_rfq_mold_file_archivo.py": {
+    "mtime": 1779854788.9327953,
+    "ast_hash": "587dc600627b1fe61a0b6861192a2948",
+    "semantic_hash": "587dc600627b1fe61a0b6861192a2948"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\migrations\\__init__.py": {
+    "mtime": 1779001907.4029734,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\models.py": {
+    "mtime": 1779734502.146604,
+    "ast_hash": "49200c063dbad6d4a0155d8b0358d221",
+    "semantic_hash": "49200c063dbad6d4a0155d8b0358d221"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\serializers.py": {
+    "mtime": 1780553889.444981,
+    "ast_hash": "57e29e8aa02d3efe32ab435845d2a350",
+    "semantic_hash": "57e29e8aa02d3efe32ab435845d2a350"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\tests.py": {
+    "mtime": 1779001907.4039729,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\urls.py": {
+    "mtime": 1780384043.8621595,
+    "ast_hash": "3605f87209fe9e1005e54e510711b0d9",
+    "semantic_hash": "3605f87209fe9e1005e54e510711b0d9"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Mold\\views.py": {
+    "mtime": 1780553889.446032,
+    "ast_hash": "e72e1b8d6c701d218bedacb7fb9dad08",
+    "semantic_hash": "e72e1b8d6c701d218bedacb7fb9dad08"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\__init__.py": {
+    "mtime": 1779001907.4039729,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\admin.py": {
+    "mtime": 1779001907.4049728,
+    "ast_hash": "2da7da31c601ab2fd10d5f488147793a",
+    "semantic_hash": "2da7da31c601ab2fd10d5f488147793a"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\apps.py": {
+    "mtime": 1779001907.4049728,
+    "ast_hash": "386eefd47ed79bff51786652a5bfa79e",
+    "semantic_hash": "386eefd47ed79bff51786652a5bfa79e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\migrations\\0001_initial.py": {
+    "mtime": 1779001907.4049728,
+    "ast_hash": "f086a36c7b5611071a0a547cfa86ca23",
+    "semantic_hash": "f086a36c7b5611071a0a547cfa86ca23"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\migrations\\0002_alter_rfq_trimming_options_alter_rfq_trimming_table.py": {
+    "mtime": 1779307264.3281398,
+    "ast_hash": "dc9fdc8d99fa60c13e94739e7fd072f9",
+    "semantic_hash": "dc9fdc8d99fa60c13e94739e7fd072f9"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\migrations\\0003_alter_rfq_trimming_options_alter_rfq_trimming_cust_and_more.py": {
+    "mtime": 1779656459.078972,
+    "ast_hash": "0a72e7b5228aeb65ac438c6ab6a98d61",
+    "semantic_hash": "0a72e7b5228aeb65ac438c6ab6a98d61"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\migrations\\0004_alter_rfq_trimming_file_archivo.py": {
+    "mtime": 1779854788.9337955,
+    "ast_hash": "2364358edd265c148d081884f75b3123",
+    "semantic_hash": "2364358edd265c148d081884f75b3123"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\migrations\\__init__.py": {
+    "mtime": 1779001907.4049728,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\models.py": {
+    "mtime": 1779734525.221088,
+    "ast_hash": "e1fbb9eac364f96645484ab88cd201cd",
+    "semantic_hash": "e1fbb9eac364f96645484ab88cd201cd"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\serializers.py": {
+    "mtime": 1780553889.4465537,
+    "ast_hash": "2f37e31197ec5a9f36292b2b3c810589",
+    "semantic_hash": "2f37e31197ec5a9f36292b2b3c810589"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\tests.py": {
+    "mtime": 1779001907.4059732,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\urls.py": {
+    "mtime": 1780384052.9688814,
+    "ast_hash": "046c15211164153b5dc984de21ae19b4",
+    "semantic_hash": "046c15211164153b5dc984de21ae19b4"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\RFQ_Trimming\\views.py": {
+    "mtime": 1780553889.4470806,
+    "ast_hash": "c78ba08cd4d741bbb67cdda6a4f3aeb1",
+    "semantic_hash": "c78ba08cd4d741bbb67cdda6a4f3aeb1"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\__init__.py": {
+    "mtime": 1780553889.4476202,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\admin.py": {
+    "mtime": 1780553889.4481454,
+    "ast_hash": "fb59da9b617f2f615b5a0e03a9e82ee5",
+    "semantic_hash": "fb59da9b617f2f615b5a0e03a9e82ee5"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\apps.py": {
+    "mtime": 1780553889.4487455,
+    "ast_hash": "3066d3ca6d9451276d088d89d079a944",
+    "semantic_hash": "3066d3ca6d9451276d088d89d079a944"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\migrations\\0001_initial.py": {
+    "mtime": 1780553889.4492812,
+    "ast_hash": "2e41ab77a9cb98612c3731731bb92852",
+    "semantic_hash": "2e41ab77a9cb98612c3731731bb92852"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\migrations\\__init__.py": {
+    "mtime": 1780553889.4497943,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\models.py": {
+    "mtime": 1780553889.450328,
+    "ast_hash": "18d34341f9cebf8f03be067077025e1a",
+    "semantic_hash": "18d34341f9cebf8f03be067077025e1a"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\serializers.py": {
+    "mtime": 1780553889.4508483,
+    "ast_hash": "be95f65c9cc2b647603dd9767ff68998",
+    "semantic_hash": "be95f65c9cc2b647603dd9767ff68998"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\services.py": {
+    "mtime": 1780553889.4508483,
+    "ast_hash": "6387b1a53299eb484f8ed2b86c4e8abc",
+    "semantic_hash": "6387b1a53299eb484f8ed2b86c4e8abc"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\tests.py": {
+    "mtime": 1780553889.451368,
+    "ast_hash": "af7a409f21710b2d28f1b0258c7917c0",
+    "semantic_hash": "af7a409f21710b2d28f1b0258c7917c0"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\urls.py": {
+    "mtime": 1780553889.4518871,
+    "ast_hash": "03bf72da32d997f466631d885153a47e",
+    "semantic_hash": "03bf72da32d997f466631d885153a47e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\historial\\views.py": {
+    "mtime": 1780553889.4524112,
+    "ast_hash": "b21e48af0521930f976c75f83bf48d8c",
+    "semantic_hash": "b21e48af0521930f976c75f83bf48d8c"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\manage.py": {
+    "mtime": 1779001907.4059732,
+    "ast_hash": "e82d2a7a30d7c88a44d3e67130cc8bbe",
+    "semantic_hash": "e82d2a7a30d7c88a44d3e67130cc8bbe"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\__init__.py": {
+    "mtime": 1779656459.081066,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\apps.py": {
+    "mtime": 1779656459.0815985,
+    "ast_hash": "ace36595fbb483d6304060016e193ec4",
+    "semantic_hash": "ace36595fbb483d6304060016e193ec4"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\migrations\\__init__.py": {
+    "mtime": 1779656459.0821269,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\services.py": {
+    "mtime": 1779656459.0826478,
+    "ast_hash": "3d57743dc49722d92f2fc11a057cdd8e",
+    "semantic_hash": "3d57743dc49722d92f2fc11a057cdd8e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\tasks.py": {
+    "mtime": 1779656459.0832257,
+    "ast_hash": "113e43d14a4e31027806ce63d855b35f",
+    "semantic_hash": "113e43d14a4e31027806ce63d855b35f"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\tests.py": {
+    "mtime": 1780553889.452946,
+    "ast_hash": "1981badc62668317bbf5307619915470",
+    "semantic_hash": "1981badc62668317bbf5307619915470"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\__init__.py": {
+    "mtime": 1779001907.4059732,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\admin.py": {
+    "mtime": 1779051876.9791236,
+    "ast_hash": "afbac386a4f0078cde49bfb9af8b7b61",
+    "semantic_hash": "afbac386a4f0078cde49bfb9af8b7b61"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\apps.py": {
+    "mtime": 1779003969.3589983,
+    "ast_hash": "b58a3d79b02f68089b3ab907f861310d",
+    "semantic_hash": "b58a3d79b02f68089b3ab907f861310d"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\authentication.py": {
+    "mtime": 1779656459.0885577,
+    "ast_hash": "c6bfe10928ae844111f8291a4203a4ae",
+    "semantic_hash": "c6bfe10928ae844111f8291a4203a4ae"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\migrations\\0001_initial.py": {
+    "mtime": 1779001907.4079726,
+    "ast_hash": "8f388a6e437a5e059ab06289e6db5f1b",
+    "semantic_hash": "8f388a6e437a5e059ab06289e6db5f1b"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\migrations\\0002_alter_customuser_role.py": {
+    "mtime": 1779001907.4089732,
+    "ast_hash": "c11ae997fab3ddf399d50cfc87910c77",
+    "semantic_hash": "c11ae997fab3ddf399d50cfc87910c77"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\migrations\\__init__.py": {
+    "mtime": 1779001907.4089732,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\models.py": {
+    "mtime": 1779001907.4099731,
+    "ast_hash": "fcd9aed56076b54ea34a404278487511",
+    "semantic_hash": "fcd9aed56076b54ea34a404278487511"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\permissions.py": {
+    "mtime": 1780082453.8877378,
+    "ast_hash": "62c6a4677e48afc380becb4d7f22c579",
+    "semantic_hash": "62c6a4677e48afc380becb4d7f22c579"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\serializers.py": {
+    "mtime": 1779001907.4099731,
+    "ast_hash": "8775c8326d13262e18d5427ee3b63cd4",
+    "semantic_hash": "8775c8326d13262e18d5427ee3b63cd4"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\tests.py": {
+    "mtime": 1779001907.410972,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\urls.py": {
+    "mtime": 1779656459.090558,
+    "ast_hash": "bf7cb40b144d0031a32a9a4c95280076",
+    "semantic_hash": "bf7cb40b144d0031a32a9a4c95280076"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\users\\views.py": {
+    "mtime": 1779656459.091166,
+    "ast_hash": "b46c16e956c8302de58e9bcedafb1d12",
+    "semantic_hash": "b46c16e956c8302de58e9bcedafb1d12"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\README.MD": {
+    "mtime": 1780553889.4444606,
+    "ast_hash": "13ef96c622086b5f9fb5f8acfc095742",
+    "semantic_hash": "13ef96c622086b5f9fb5f8acfc095742"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\docs\\flujo_comercializacion.md": {
+    "mtime": 1780393053.6457274,
+    "ast_hash": "ddc2865b041be96c516de9bad4d7db53",
+    "semantic_hash": "ddc2865b041be96c516de9bad4d7db53"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\docs\\flujo_industrializacion.md": {
+    "mtime": 1780386047.8708136,
+    "ast_hash": "8a34140b7be4d2ae6b93f2b1eed3d834",
+    "semantic_hash": "8a34140b7be4d2ae6b93f2b1eed3d834"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\docs\\flujo_proveedor.md": {
+    "mtime": 1780394167.1373713,
+    "ast_hash": "bbf7eb02d27600583e63a91a3389c193",
+    "semantic_hash": "bbf7eb02d27600583e63a91a3389c193"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\templates\\notificaciones\\cancelacion_confirmada.html": {
+    "mtime": 1779656459.0837467,
+    "ast_hash": "5475ef2045837a7b7cca767ba50740d3",
+    "semantic_hash": "5475ef2045837a7b7cca767ba50740d3"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\templates\\notificaciones\\cotizacion_recibida.html": {
+    "mtime": 1779656459.0842683,
+    "ast_hash": "d78f108a5abf8183bccc75e10048c41c",
+    "semantic_hash": "d78f108a5abf8183bccc75e10048c41c"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\templates\\notificaciones\\modificacion_rfq.html": {
+    "mtime": 1779656459.0842683,
+    "ast_hash": "75a32ce8465b7fe605fe76a7ebf7b3dd",
+    "semantic_hash": "75a32ce8465b7fe605fe76a7ebf7b3dd"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\templates\\notificaciones\\rfq_a_compras.html": {
+    "mtime": 1779656459.085273,
+    "ast_hash": "7c0252d5946a2977717720ae0a146c2b",
+    "semantic_hash": "7c0252d5946a2977717720ae0a146c2b"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\templates\\notificaciones\\rfq_a_proveedores.html": {
+    "mtime": 1779656459.085273,
+    "ast_hash": "fe3562ea9c55da81a6fa9e1a6178a373",
+    "semantic_hash": "fe3562ea9c55da81a6fa9e1a6178a373"
+  },
+  "C:\\Users\\pedro\\OneDrive\\Escritorio\\Development\\TEC\\6toSemestre\\Bocar\\Bocar-django\\notificaciones\\templates\\notificaciones\\solicitud_cancelacion.html": {
+    "mtime": 1779656459.085273,
+    "ast_hash": "99b0b2741e03ddace55e29b3b5b5bea0",
+    "semantic_hash": "99b0b2741e03ddace55e29b3b5b5bea0"
+  }
+}
