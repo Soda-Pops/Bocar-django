@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',  # Habilita django-cors-headers para que el backend pueda responder solicitudes CORS del frontend.
     'rest_framework',
     'users',
     'djoser',
@@ -106,6 +107,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Agrega los headers CORS antes de que otros middlewares puedan generar la respuesta.
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -114,6 +116,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOWED_ORIGINS = [  # Define explicitamente que origenes del frontend pueden llamar al backend desde el navegador.
+    'http://localhost:5173',  # Permite peticiones desde Vite cuando el frontend corre en localhost.
+    'http://127.0.0.1:5173',  # Permite peticiones desde Vite cuando el frontend usa la IP local en lugar de localhost.
+]  # Cierra la lista de origenes permitidos para evitar aceptar dominios no autorizados.
+CORS_ALLOW_CREDENTIALS = True  # Permite enviar y recibir cookies HttpOnly en solicitudes cross-origin del frontend.
 
 ROOT_URLCONF = 'Bocar.urls'
 
