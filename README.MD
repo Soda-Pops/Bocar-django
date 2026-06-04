@@ -41,15 +41,19 @@ El módulo `notificaciones/` envía correos automáticos vía **BCC** al ocurrir
 
 | Evento | Destinatarios (BCC) | Estado |
 |--------|---------------------|--------|
+| RFQ enviada a revisión (avance a `En_Com`) | Comercialización | Conectado — `Industrializacion` (enviar a Comercialización) |
+| RFQ enviada a proveedores (`En_Pro`) | Proveedor | Conectado — `Comercializacion` (crear asignaciones) |
+| Cotización recibida | Comercialización | Conectado — `Asignaciones` (proveedor envía respuesta) |
 | RFQ regresada a Industrialización (solicitud y aprobación de edición) | Comercialización / Industrialización | Conectado |
 | RFQ eliminada lógicamente | Industrialización + Comercialización | Conectado |
-| RFQ enviada a revisión (avance a `En_Com`) | Comercialización | Pendiente — falta el endpoint que avance el status |
-| RFQ enviada a proveedores (`En_Pro`) | Proveedor | Pendiente — falta el flujo de asignación a proveedores |
-| Cotización recibida | Comercialización | Pendiente — falta el endpoint de submission de cotización |
 | Solicitud de cancelación | Admins (`is_admin=True`) | Pendiente — el borrado lógico hoy es directo, no hay flujo de solicitud |
 
-> Las funciones de notificación de los eventos pendientes ya existen en `notificaciones/services.py`
-> y `notificaciones/tasks.py`; solo falta construir el endpoint/flujo de negocio que las dispare.
+> El único evento pendiente (`notificar_cancelacion_solicitada`) ya tiene su función en
+> `notificaciones/services.py` y `notificaciones/tasks.py`; falta construir el flujo de *solicitud*
+> de cancelación (modelo/endpoint) que la dispare.
+>
+> Todas las notificaciones se disparan condicionadas a la variable de entorno
+> `NOTIFICATIONS_ENABLED` (ver más abajo).
 
 ### Variables de entorno
 
@@ -105,4 +109,67 @@ celery -A Bocar worker --loglevel=info
 python manage.py test notificaciones
 ```
 
-Cubre: lógica de BCC/TO en `_enviar`, filtrado de destinatarios por rol, casos sin destinatarios, y ejecución de tareas Celery (15 tests, sin broker requerido).
+Cubre (19 tests, sin broker requerido):
+- Lógica de BCC/TO en `_enviar`, filtrado de destinatarios por rol y casos sin destinatarios.
+- Ejecución de las tareas Celery con `.apply()` (síncrono).
+- **Integración por endpoint:** que cada vista de avance de flujo encole su tarea con
+  `NOTIFICATIONS_ENABLED=True` y **no** la encole con el flag apagado:
+  - `Industrializacion` enviar a Comercialización → `notificar_comercializacion`
+  - `Comercializacion` crear asignaciones → `notificar_proveedores`
+  - `Asignaciones` enviar respuesta → `notificar_cotizacion_recibida`
+
+---
+
+## **Historial / Auditoría de RFQs**
+
+La app `historial/` registra automáticamente los eventos del ciclo de vida de cada RFQ
+(Mold y Trimming): creación, edición (con diff de campos antes/después), envío a Comercialización,
+asignación/envío a proveedores, solicitud/aprobación/rechazo de edición, cotización recibida,
+cancelación y extensiones de tiempo (solicitar/aprobar/rechazar).
+
+El registro se engancha en los **serializers compartidos** (cubre los endpoints viejos *y* nuevos) y en
+las vistas con punto único, mediante el helper `historial.services.registrar_historial`. No usa señales
+ni middleware: cada evento se registra de forma explícita y con su `actor`.
+
+### Consulta
+
+```
+GET /api_historial/v1/<tipo>/<rfq_id>/      # tipo = mold | trimming
+```
+
+Devuelve el timeline ordenado (más reciente primero). Requiere autenticación. Cada evento incluye:
+`evento`, `actor`, `timestamp`, `status_anterior`/`status_nuevo`, `cambios` (diff de edición) y
+`detalle` (contexto extra: proveedores, nueva_fecha, motivo, etc.).
+
+#### Filtros (query params, opcionales y combinables)
+
+| Param | Descripción | Ejemplo |
+|-------|-------------|---------|
+| `evento` | Tipo de evento; repetible para varios | `?evento=CANCELACION&evento=EDICION` |
+| `actor` | ID del usuario que ejecutó el evento | `?actor=5` |
+| `desde` | Fecha inicial inclusive (`YYYY-MM-DD`) | `?desde=2026-01-01` |
+| `hasta` | Fecha final inclusive (`YYYY-MM-DD`) | `?hasta=2026-06-30` |
+
+Valores inválidos (evento inexistente, actor no numérico o fecha mal formada) devuelven `400`.
+
+#### Paginación
+
+La respuesta viene paginada con el formato `{count, next, previous, results}`.
+
+| Param | Descripción | Default |
+|-------|-------------|---------|
+| `page` | Número de página | `1` |
+| `page_size` | Eventos por página (máx. 100) | `20` |
+
+> El historial arranca desde su despliegue; las RFQs creadas antes no tienen registro retroactivo.
+
+### Tests
+
+```bash
+python manage.py test historial
+```
+
+Cubre (15 tests): helper de diff; que cada evento del flujo cree su fila —creación, edición con diff,
+envío a Comercialización, asignación + envío a proveedores, cancelación, aprobación de edición (vía
+serializer compartido, route-agnostic)—; el endpoint de lectura (autenticado y sin auth); los filtros
+(por evento, varios eventos, actor, y validación de evento/fecha inválidos); y la paginación.

@@ -1,10 +1,20 @@
-from datetime import date
+import shutil
+import tempfile
+from datetime import date, timedelta
 from unittest.mock import patch, MagicMock
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
+from rest_framework.test import APIRequestFactory, force_authenticate
 
 from users.models import CustomUser
-from RFQ_Mold.models import RFQ_Mold
+from RFQ_Mold.models import RFQ_Mold, RFQ_Mold_File
+from Proveedores.models import Proveedor
+from Asignaciones.models import Asignacion_Proveedor_Mold
+from Prov_RFQ_Mold.models import Cost_Breakdown_Mold
+from Industrializacion.views import RFQEnviarAComercializacionView
+from Comercializacion.views import CrearAsignacionesView
+from Asignaciones.views import AsignacionEnviarRespuestaView
 from notificaciones import services, tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION, ROL_COMERCIALIZACION, ROL_PROVEEDOR
 
@@ -187,3 +197,91 @@ class NotificacionTasksTest(TestCase):
             args=[self.rfq.id, 'invalido', self.admin.id]
         )
         self.assertFalse(result.successful())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# INTEGRACIÓN — los endpoints de avance de flujo encolan su tarea
+# Verifica que el guard `if settings.NOTIFICATIONS_ENABLED` funciona en cada vista.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_TMP_MEDIA = tempfile.mkdtemp()
+
+
+@override_settings(MEDIA_ROOT=_TMP_MEDIA)
+class FlujoNotificacionesViewsTest(TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(_TMP_MEDIA, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.ind = make_user('ind', 'ind@test.com', role=ROL_INDUSTRIALIZACION)
+        self.com = make_user('com', 'com@test.com', role=ROL_COMERCIALIZACION)
+        self.pro = make_user('pro', 'pro@test.com', role=ROL_PROVEEDOR)
+        self.proveedor = Proveedor.objects.create(
+            id_account=self.pro, company_name='ACME', contact_email='acme@test.com',
+        )
+        self.futuro = date.today() + timedelta(days=30)
+        self.rfq = RFQ_Mold.objects.create(created_by=self.ind, due_date=self.futuro)
+
+    # ── Industrialización → Comercialización (notificar_comercializacion) ──
+    @override_settings(NOTIFICATIONS_ENABLED=True)
+    @patch('Industrializacion.views.notif_tasks.notificar_comercializacion.delay')
+    def test_enviar_a_comercializacion_encola_tarea(self, mock_delay):
+        RFQ_Mold_File.objects.create(
+            rfq_mold=self.rfq, archivo=SimpleUploadedFile('f.txt', b'x'),
+        )
+        request = self.factory.post('/?tipo=mold')
+        force_authenticate(request, user=self.ind)
+        response = RFQEnviarAComercializacionView.as_view()(request, pk=self.rfq.id)
+        self.assertEqual(response.status_code, 200)
+        mock_delay.assert_called_once_with(self.rfq.id, 'mold')
+
+    @override_settings(NOTIFICATIONS_ENABLED=False)
+    @patch('Industrializacion.views.notif_tasks.notificar_comercializacion.delay')
+    def test_enviar_a_comercializacion_flag_off_no_encola(self, mock_delay):
+        RFQ_Mold_File.objects.create(
+            rfq_mold=self.rfq, archivo=SimpleUploadedFile('f.txt', b'x'),
+        )
+        request = self.factory.post('/?tipo=mold')
+        force_authenticate(request, user=self.ind)
+        response = RFQEnviarAComercializacionView.as_view()(request, pk=self.rfq.id)
+        self.assertEqual(response.status_code, 200)
+        mock_delay.assert_not_called()
+
+    # ── Comercialización → Proveedores (notificar_proveedores) ──
+    @override_settings(NOTIFICATIONS_ENABLED=True)
+    @patch('Comercializacion.views.notif_tasks.notificar_proveedores.delay')
+    def test_crear_asignaciones_encola_tarea(self, mock_delay):
+        request = self.factory.post(
+            '/?tipo=mold',
+            {
+                'id_rfq': self.rfq.id,
+                'due_date': self.futuro.isoformat(),
+                'proveedores': [self.proveedor.id],
+            },
+            format='json',
+        )
+        force_authenticate(request, user=self.com)
+        response = CrearAsignacionesView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        mock_delay.assert_called_once_with(self.rfq.id, 'mold')
+
+    # ── Proveedor envía cotización (notificar_cotizacion_recibida) ──
+    @override_settings(NOTIFICATIONS_ENABLED=True)
+    @patch('Asignaciones.views.notif_tasks.notificar_cotizacion_recibida.delay')
+    def test_enviar_respuesta_encola_tarea(self, mock_delay):
+        asignacion = Asignacion_Proveedor_Mold.objects.create(
+            id_RFQ_Mold=self.rfq,
+            id_Proveedor=self.proveedor,
+            id_user_comercializacion=self.com,
+            due_date=self.futuro,
+        )
+        Cost_Breakdown_Mold.objects.create(id_asignacion=asignacion)
+        request = self.factory.post('/?tipo=mold')
+        force_authenticate(request, user=self.pro)
+        response = AsignacionEnviarRespuestaView.as_view()(request, id_asignacion=asignacion.id)
+        self.assertEqual(response.status_code, 200)
+        mock_delay.assert_called_once_with(self.rfq.id, 'mold', self.pro.id)

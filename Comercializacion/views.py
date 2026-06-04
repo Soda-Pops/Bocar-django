@@ -29,6 +29,9 @@ from django.conf import settings
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION
 
+from historial.models import RFQHistorial
+from historial.services import registrar_historial
+
 from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
@@ -153,6 +156,7 @@ class CrearAsignacionesView(APIView):
         id_rfq      = serializer.validated_data['id_rfq']
         due_date    = serializer.validated_data['due_date']
         proveedores = serializer.validated_data['proveedores']
+        paso_a_pro  = False
 
         # Verificar que el RFQ existe
         if tipo == 'mold':
@@ -189,6 +193,7 @@ class CrearAsignacionesView(APIView):
             if rfq.status != RFQ_Mold.Status.PROVEEDOR:
                 rfq.status = RFQ_Mold.Status.PROVEEDOR
                 rfq.save(update_fields=['status'])
+                paso_a_pro = True
 
         else:
             try:
@@ -223,6 +228,28 @@ class CrearAsignacionesView(APIView):
             if rfq.status != RFQ_Trimming.Status.PROVEEDOR:
                 rfq.status = RFQ_Trimming.Status.PROVEEDOR
                 rfq.save(update_fields=['status'])
+                paso_a_pro = True
+
+        # Historial: envío a proveedores (solo en la transición) + asignación
+        if paso_a_pro:
+            registrar_historial(
+                rfq_tipo        = tipo,
+                rfq_id          = rfq.id,
+                evento          = RFQHistorial.Evento.ENVIO_PROVEEDORES,
+                actor           = request.user,
+                status_anterior = 'En_Com',
+                status_nuevo    = 'En_Pro',
+            )
+        registrar_historial(
+            rfq_tipo = tipo,
+            rfq_id   = rfq.id,
+            evento   = RFQHistorial.Evento.ASIGNACION_PROVEEDORES,
+            actor    = request.user,
+            detalle  = {'proveedores': proveedores, 'due_date': str(due_date)},
+        )
+
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_proveedores.delay(rfq.id, tipo)
 
         return Response(
             {'detail': 'Asignaciones procesadas correctamente.'},
@@ -383,6 +410,14 @@ class EditRequestRechazarView(APIView):
             edit_request.reviewed_by = request.user
             edit_request.reviewed_at = timezone.now()
             edit_request.save()
+
+        rfq_id = edit_request.rfq_mold_id if tipo == 'mold' else edit_request.rfq_trimming_id
+        registrar_historial(
+            rfq_tipo = tipo,
+            rfq_id   = rfq_id,
+            evento   = RFQHistorial.Evento.EDICION_RECHAZADA,
+            actor    = request.user,
+        )
 
         return Response(
             {'detail': 'Solicitud de edición rechazada. El RFQ permanece en su status actual.'},

@@ -302,6 +302,18 @@ class SolicitudExtensionMoldResolverSerializer(serializers.ModelSerializer):
             instance.id_asignacion.due_date = instance.nueva_fecha
             instance.id_asignacion.save(update_fields=['due_date'])
 
+        from historial.models import RFQHistorial
+        from historial.services import registrar_historial
+        aprobada = instance.status == ExtensionStatus.APROBADA
+        registrar_historial(
+            rfq_tipo = RFQHistorial.Tipo.MOLD,
+            rfq_id   = instance.id_asignacion.id_RFQ_Mold_id,
+            evento   = (RFQHistorial.Evento.EXTENSION_APROBADA if aprobada
+                        else RFQHistorial.Evento.EXTENSION_RECHAZADA),
+            actor    = instance.revisada_por,
+            detalle  = {'nueva_fecha': str(instance.nueva_fecha)},
+        )
+
         return instance
 
 
@@ -332,5 +344,17 @@ class SolicitudExtensionTrimmingResolverSerializer(serializers.ModelSerializer):
         if instance.status == ExtensionStatus.APROBADA:
             instance.id_asignacion.due_date = instance.nueva_fecha
             instance.id_asignacion.save(update_fields=['due_date'])
+
+        from historial.models import RFQHistorial
+        from historial.services import registrar_historial
+        aprobada = instance.status == ExtensionStatus.APROBADA
+        registrar_historial(
+            rfq_tipo = RFQHistorial.Tipo.TRIMMING,
+            rfq_id   = instance.id_asignacion.id_RFQ_Trimming_id,
+            evento   = (RFQHistorial.Evento.EXTENSION_APROBADA if aprobada
+                        else RFQHistorial.Evento.EXTENSION_RECHAZADA),
+            actor    = instance.revisada_por,
+            detalle  = {'nueva_fecha': str(instance.nueva_fecha)},
+        )
 
         return instance

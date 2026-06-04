@@ -16,6 +16,9 @@ from users.permissions import IsAdminUser, IsComercializacionAdmin
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION, ROL_COMERCIALIZACION
 
+from historial.models import RFQHistorial
+from historial.services import registrar_historial
+
 
 
 class RFQMoldListCreateView(generics.ListCreateAPIView):
@@ -81,6 +84,13 @@ class RFQMoldLogicalDeleteView(UpdateAPIView):
 
         rfq.logical_delete = True
         rfq.save()
+
+        registrar_historial(
+            rfq_tipo = RFQHistorial.Tipo.MOLD,
+            rfq_id   = rfq.id,
+            evento   = RFQHistorial.Evento.CANCELACION,
+            actor    = request.user,
+        )
 
         if settings.NOTIFICATIONS_ENABLED:
             notif_tasks.notificar_cancelacion_confirmada.delay(rfq.id, 'mold', request.user.id)

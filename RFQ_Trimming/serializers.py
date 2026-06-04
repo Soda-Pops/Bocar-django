@@ -54,6 +54,16 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
         for archivo in archivos:
             RFQ_Trimming_File.objects.create(rfq_trimming=rfq_trimming, archivo=archivo)
 
+        from historial.models import RFQHistorial
+        from historial.services import registrar_historial
+        registrar_historial(
+            rfq_tipo     = RFQHistorial.Tipo.TRIMMING,
+            rfq_id       = rfq_trimming.id,
+            evento       = RFQHistorial.Evento.CREACION,
+            actor        = rfq_trimming.created_by,
+            status_nuevo = rfq_trimming.status,
+        )
+
         return rfq_trimming
 
 
@@ -124,6 +134,20 @@ class TrimmingEditRequestCreateSerializer(serializers.ModelSerializer):
             )
         return rfq_trimming
 
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+
+        from historial.models import RFQHistorial
+        from historial.services import registrar_historial
+        registrar_historial(
+            rfq_tipo = RFQHistorial.Tipo.TRIMMING,
+            rfq_id   = instance.rfq_trimming_id,
+            evento   = RFQHistorial.Evento.SOLICITUD_EDICION,
+            actor    = instance.requested_by,
+            detalle  = {'motivo': instance.reason},
+        )
+        return instance
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 5. SOLICITUD DE EDICIÓN — LISTA
@@ -179,7 +203,19 @@ class TrimmingEditRequestApproveSerializer(serializers.ModelSerializer):
         instance.save()
 
         # Cambiamos el RFQ de En_Com a En_Ind
+        status_anterior = instance.rfq_trimming.status
         instance.rfq_trimming.status = RFQ_Trimming.Status.INDUSTRIALIZACION
         instance.rfq_trimming.save()
+
+        from historial.models import RFQHistorial
+        from historial.services import registrar_historial
+        registrar_historial(
+            rfq_tipo        = RFQHistorial.Tipo.TRIMMING,
+            rfq_id          = instance.rfq_trimming_id,
+            evento          = RFQHistorial.Evento.EDICION_APROBADA,
+            actor           = instance.reviewed_by,
+            status_anterior = status_anterior,
+            status_nuevo    = RFQ_Trimming.Status.INDUSTRIALIZACION,
+        )
 
         return instance

@@ -17,6 +17,9 @@ from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION, ROL_COMERCIALIZACION
 from django.conf import settings
 
+from historial.models import RFQHistorial
+from historial.services import registrar_historial
+
 class RFQTrimmingListCreateView(generics.ListCreateAPIView):
     """
     GET  /rfq-trimmings/
@@ -80,6 +83,13 @@ class RFQTrimmingLogicalDeleteView(UpdateAPIView):
  
         rfq.logical_delete = True
         rfq.save()
+
+        registrar_historial(
+            rfq_tipo = RFQHistorial.Tipo.TRIMMING,
+            rfq_id   = rfq.id,
+            evento   = RFQHistorial.Evento.CANCELACION,
+            actor    = request.user,
+        )
 
         if settings.NOTIFICATIONS_ENABLED:
             notif_tasks.notificar_cancelacion_confirmada.delay(rfq.id, 'trimming', request.user.id)

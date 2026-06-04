@@ -23,6 +23,9 @@ from RFQ_Trimming.serializers import (
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_COMERCIALIZACION
 
+from historial.models import RFQHistorial
+from historial.services import registrar_historial, diff_campos
+
 from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
@@ -168,7 +171,17 @@ class RFQEditarView(APIView):
             archivos   = request.FILES.getlist('archivos')
             serializer = RFQMoldCreateSerializer(rfq, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
+            cambios = diff_campos(rfq, serializer.validated_data)
             serializer.save(archivos=archivos)
+
+            if cambios:
+                registrar_historial(
+                    rfq_tipo = RFQHistorial.Tipo.MOLD,
+                    rfq_id   = rfq.id,
+                    evento   = RFQHistorial.Evento.EDICION,
+                    actor    = request.user,
+                    cambios  = cambios,
+                )
 
         else:
             try:
@@ -189,7 +202,17 @@ class RFQEditarView(APIView):
             archivos   = request.FILES.getlist('archivos')
             serializer = RFQTrimmingCreateSerializer(rfq, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
+            cambios = diff_campos(rfq, serializer.validated_data)
             serializer.save(archivos=archivos)
+
+            if cambios:
+                registrar_historial(
+                    rfq_tipo = RFQHistorial.Tipo.TRIMMING,
+                    rfq_id   = rfq.id,
+                    evento   = RFQHistorial.Evento.EDICION,
+                    actor    = request.user,
+                    cambios  = cambios,
+                )
 
         return Response(
             {'detail': f'RFQ {tipo.capitalize()} actualizado correctamente.'},
@@ -285,6 +308,18 @@ class RFQEnviarAComercializacionView(APIView):
 
             rfq.status = RFQ_Trimming.Status.COMERCIALIZACION
             rfq.save(update_fields=['status'])
+
+        registrar_historial(
+            rfq_tipo        = tipo,
+            rfq_id          = rfq.id,
+            evento          = RFQHistorial.Evento.ENVIO_COMERCIALIZACION,
+            actor           = request.user,
+            status_anterior = 'En_Ind',
+            status_nuevo    = 'En_Com',
+        )
+
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_comercializacion.delay(rfq.id, tipo)
 
         return Response(
             {'detail': f'RFQ {tipo.capitalize()} enviado a Comercialización correctamente.'},

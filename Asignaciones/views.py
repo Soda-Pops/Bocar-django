@@ -1,9 +1,14 @@
 from datetime import date
 
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from users.permissions import IsProveedor, IsComercializacionUser
+from notificaciones import tasks as notif_tasks
+
+from historial.models import RFQHistorial
+from historial.services import registrar_historial
 from .models import (
     Asignacion_Proveedor_Mold,
     Asignacion_Proveedor_Trimming,
@@ -400,6 +405,19 @@ class AsignacionEnviarRespuestaView(APIView):
         asignacion.is_answered = True
         asignacion.save(update_fields=['is_answered'])
 
+        rfq = asignacion.id_RFQ_Mold if tipo == 'mold' else asignacion.id_RFQ_Trimming
+
+        registrar_historial(
+            rfq_tipo = tipo,
+            rfq_id   = rfq.id,
+            evento   = RFQHistorial.Evento.COTIZACION_RECIBIDA,
+            actor    = request.user,
+            detalle  = {'proveedor': proveedor.company_name},
+        )
+
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_cotizacion_recibida.delay(rfq.id, tipo, request.user.id)
+
         return Response({'detail': 'Respuesta enviada correctamente.'}, status=status.HTTP_200_OK)
 
 
@@ -474,7 +492,8 @@ class SolicitudExtensionCreateView(APIView):
                 context={'asignacion': asignacion},
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save(id_asignacion=asignacion)
+            solicitud = serializer.save(id_asignacion=asignacion)
+            rfq_id    = asignacion.id_RFQ_Mold_id
 
         else:
             try:
@@ -493,7 +512,16 @@ class SolicitudExtensionCreateView(APIView):
                 context={'asignacion': asignacion},
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save(id_asignacion=asignacion)
+            solicitud = serializer.save(id_asignacion=asignacion)
+            rfq_id    = asignacion.id_RFQ_Trimming_id
+
+        registrar_historial(
+            rfq_tipo = tipo,
+            rfq_id   = rfq_id,
+            evento   = RFQHistorial.Evento.EXTENSION_SOLICITADA,
+            actor    = request.user,
+            detalle  = {'nueva_fecha': str(solicitud.nueva_fecha)},
+        )
 
         return Response(
             {'detail': 'Solicitud de extensión enviada correctamente.'},
