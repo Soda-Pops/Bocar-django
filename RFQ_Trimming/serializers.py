@@ -66,6 +66,15 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
 
         return rfq_trimming
 
+    def update(self, instance, validated_data):
+        archivos = validated_data.pop('archivos', [])
+        rfq_trimming = super().update(instance, validated_data)
+
+        for archivo in archivos:
+            RFQ_Trimming_File.objects.create(rfq_trimming=rfq_trimming, archivo=archivo)
+
+        return rfq_trimming
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. SERIALIZER DE DETALLE (GET por ID)

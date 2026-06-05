@@ -275,8 +275,10 @@ class EditRequestAprobarView(APIView):
         description="""
             Aprueba una solicitud de edición pendiente. El RFQ vuelve a En_Ind.
             Requiere is_admin=True y role='Com'.
+            No requiere cuerpo en el request.
         """,
         parameters=[_TIPO_PARAM],
+        request=None,
         responses={
             200: inline_serializer(
                 name='EditRequestAprobarResponse',
@@ -355,8 +357,10 @@ class EditRequestRechazarView(APIView):
             Rechaza una solicitud de edición pendiente. El RFQ permanece en En_Com.
             Se registra el motivo del rechazo, el revisor y el timestamp.
             Requiere is_admin=True y role='Com'.
+            No requiere cuerpo en el request.
         """,
         parameters=[_TIPO_PARAM],
+        request=None,
         responses={
             200: inline_serializer(
                 name='EditRequestRechazarResponse',
@@ -518,6 +522,7 @@ class ExtensionTiempoResolverView(APIView):
             Requiere role='Com'.
         """,
         parameters=[_TIPO_PARAM],
+        request=SolicitudExtensionMoldResolverSerializer,
         responses={
             200: inline_serializer(
                 name='ExtensionResolverResponse',

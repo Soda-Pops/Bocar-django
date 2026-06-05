@@ -58,6 +58,15 @@ class RFQMoldCreateSerializer(serializers.ModelSerializer):
 
         return rfq_mold
 
+    def update(self, instance, validated_data):
+        archivos = validated_data.pop('archivos', [])
+        rfq_mold = super().update(instance, validated_data)
+
+        for archivo in archivos:
+            RFQ_Mold_File.objects.create(rfq_mold=rfq_mold, archivo=archivo)
+
+        return rfq_mold
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. SERIALIZER DE DETALLE (GET por ID)

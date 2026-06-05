@@ -23,6 +23,7 @@ from .models import (
 )
 from Prov_RFQ_Mold.models import Cost_Breakdown_Mold, Set_of_Cavities_Mold
 from Prov_RFQ_Trimming.models import Cost_Breakdown_Trimming
+from .services import reopen_assignment_for_extension
 
 
 class AsignacionMoldProveedorSerializer(serializers.ModelSerializer):
@@ -299,8 +300,19 @@ class SolicitudExtensionMoldResolverSerializer(serializers.ModelSerializer):
 
         # Si se aprueba, actualizamos el due_date de la asignación
         if instance.status == ExtensionStatus.APROBADA:
-            instance.id_asignacion.due_date = instance.nueva_fecha
-            instance.id_asignacion.save(update_fields=['due_date'])
+            reopen_assignment_for_extension(instance.id_asignacion, instance.nueva_fecha)
+
+        from historial.models import RFQHistorial
+        from historial.services import registrar_historial
+        aprobada = instance.status == ExtensionStatus.APROBADA
+        registrar_historial(
+            rfq_tipo = RFQHistorial.Tipo.MOLD,
+            rfq_id   = instance.id_asignacion.id_RFQ_Mold_id,
+            evento   = (RFQHistorial.Evento.EXTENSION_APROBADA if aprobada
+                        else RFQHistorial.Evento.EXTENSION_RECHAZADA),
+            actor    = instance.revisada_por,
+            detalle  = {'nueva_fecha': str(instance.nueva_fecha)},
+        )
 
         from historial.models import RFQHistorial
         from historial.services import registrar_historial
@@ -342,8 +354,7 @@ class SolicitudExtensionTrimmingResolverSerializer(serializers.ModelSerializer):
         instance.save()
 
         if instance.status == ExtensionStatus.APROBADA:
-            instance.id_asignacion.due_date = instance.nueva_fecha
-            instance.id_asignacion.save(update_fields=['due_date'])
+            reopen_assignment_for_extension(instance.id_asignacion, instance.nueva_fecha)
 
         from historial.models import RFQHistorial
         from historial.services import registrar_historial

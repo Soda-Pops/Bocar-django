@@ -11,6 +11,9 @@ class ProveedorListSerializer(serializers.ModelSerializer):
     # Trae el email de la cuenta de usuario enlazada por el OneToOneField
     account_email = serializers.ReadOnlyField(source='id_account.email')
 
+    # CountryField devuelve un objeto Country; serializamos su código ISO.
+    country = serializers.SerializerMethodField()
+
     # Devuelve el nombre legible del país en lugar del código ISO
     country_name  = serializers.SerializerMethodField()
 
@@ -20,6 +23,9 @@ class ProveedorListSerializer(serializers.ModelSerializer):
     def get_country_name(self, obj):
         # CountryField tiene un método .name que devuelve el nombre completo del país
         return obj.country.name if obj.country else None
+
+    def get_country(self, obj):
+        return str(obj.country) if obj.country else None
 
     def get_continent_name(self, obj):
         # get_FOO_display() devuelve el label del TextChoices en lugar del valor corto
