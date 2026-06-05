@@ -1,6 +1,6 @@
 # Problemas de seguridad identificados
 
-> Revisión realizada el 2026-06-04.
+> Revisión realizada el 2026-06-05.
 > Archivo de referencia principal: `Bocar/settings.py`, `users/authentication.py`,
 > `users/views.py`, `users/permissions.py`.
 
@@ -13,10 +13,10 @@
 | 1 | 🔴 Crítico | `SECRET_KEY` hardcodeado en el código fuente | ✅ Corregido |
 | 2 | 🔴 Crítico | `DEBUG` y `ALLOWED_HOSTS` hardcodeados | ✅ Corregido |
 | 3 | 🟠 Alto | Duración de cookie y token JWT desincronizados | ⏳ Pendiente |
-| 4 | 🟠 Alto | Sin rate limiting en `/auth/login/` | ⏳ Pendiente |
+| 4 | 🟠 Alto | Sin rate limiting en `/auth/login/` | ✅ Corregido |
 | 5 | 🟠 Alto | Sin `DEFAULT_PERMISSION_CLASSES` en DRF | ⏳ Pendiente |
 | 6 | 🟡 Medio | Cambios de rol no se aplican hasta que expira el token (hasta 10h) | ⏳ Pendiente |
-| 7 | 🟡 Medio | Sin permisos a nivel de objeto — riesgo de IDOR | ⏳ Pendiente |
+| 7 | 🟡 Medio | Sin permisos a nivel de objeto — riesgo de IDOR | ✅ Corregido |
 | 8 | 🟡 Medio | `IsAdminUser` incorrecto en la config de `djoser` | ⏳ Pendiente |
 | 9 | 🟢 Bajo | `SameSite=Lax` en lugar de `Strict` | ⏳ Pendiente |
 | 10 | 🟢 Bajo | Sin configuración de CORS | ⏳ Pendiente |
@@ -109,33 +109,24 @@ response.set_cookie(..., max_age=int(refresh_lifetime))
 
 ---
 
-### 4. ⏳ Sin rate limiting en `/auth/login/`
+### 4. ✅ Sin rate limiting en `/auth/login/` — CORREGIDO
 
-**Archivo:** `users/views.py` — `LoginView`
+**Archivo:** `users/views.py` — `LoginView` · `Bocar/settings.py`
 
-**Problema:** No existe ningún límite de intentos de autenticación. Un atacante puede hacer
-peticiones ilimitadas para adivinar contraseñas (ataque de fuerza bruta o diccionario) sin ningún
-tipo de ralentización ni bloqueo.
+**Problema:** No existía ningún límite de intentos de autenticación. Un atacante podía hacer
+peticiones ilimitadas para adivinar contraseñas (fuerza bruta o diccionario).
 
-**Corrección sugerida:** Instalar `django-axes` y configurarlo:
-
-```bash
-pip install django-axes
-```
+**Corrección aplicada:** Se usó `ScopedRateThrottle` de DRF (ya incluido, sin dependencias nuevas).
+El scope `login` limita a **5 intentos por minuto por IP**. Al superarlo, DRF devuelve `429 Too Many Requests`.
 
 ```python
-# settings.py
-INSTALLED_APPS += ['axes']
-MIDDLEWARE += ['axes.middleware.AxesMiddleware']  # debe ir primero
+# settings.py — en REST_FRAMEWORK
+'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.ScopedRateThrottle'],
+'DEFAULT_THROTTLE_RATES': {'login': '5/min'},
 
-AUTHENTICATION_BACKENDS = [
-    'axes.backends.AxesStandaloneBackend',
-    'django.contrib.auth.backends.ModelBackend',
-]
-
-AXES_FAILURE_LIMIT = 5           # bloquea tras 5 intentos fallidos
-AXES_COOLOFF_TIME = timedelta(minutes=15)
-AXES_LOCKOUT_CALLABLE = 'axes.handlers.database.AxesDatabaseHandler'
+# users/views.py — en LoginView
+throttle_classes = [ScopedRateThrottle]
+throttle_scope   = 'login'
 ```
 
 ---
@@ -150,9 +141,12 @@ valor por defecto de DRF es `AllowAny`, lo que significa que cualquier vista que
 detectar.
 
 ```python
-# Configuración actual — incompleta
+# Configuración actual — falta DEFAULT_PERMISSION_CLASSES
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': ('users.authentication.CookieJWTAuthentication',),
+    'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.ScopedRateThrottle'],
+    'DEFAULT_THROTTLE_RATES': {'login': '5/min'},
     # ← falta DEFAULT_PERMISSION_CLASSES
 }
 ```
@@ -161,7 +155,10 @@ REST_FRAMEWORK = {
 
 ```python
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': ('users.authentication.CookieJWTAuthentication',),
+    'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.ScopedRateThrottle'],
+    'DEFAULT_THROTTLE_RATES': {'login': '5/min'},
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
 }
 ```
@@ -196,30 +193,30 @@ token['is_admin'] = user.is_admin
 
 ---
 
-### 7. ⏳ Sin permisos a nivel de objeto — riesgo de IDOR
+### 7. ✅ Sin permisos a nivel de objeto — riesgo de IDOR — CORREGIDO
 
-**Archivo:** `users/permissions.py`
+**Archivos:** `Asignaciones/views.py` · `General_RFQs/views.py`
 
-**Problema:** Las clases de permiso solo implementan `has_permission` (¿tiene el usuario el rol
-correcto?) pero no `has_object_permission` (¿tiene el usuario acceso a *este* objeto en
-particular?). Esto abre la posibilidad de un ataque IDOR (Insecure Direct Object Reference): un
-proveedor que conozca el ID de la asignación de otro proveedor podría acceder a ella si la vista
-no verifica explícitamente la propiedad.
+**Problema original:** Las clases de permiso solo implementan `has_permission` (¿tiene el usuario
+el rol correcto?) pero no `has_object_permission` (¿tiene el usuario acceso a *este* objeto en
+particular?). Riesgo teórico: un proveedor que conociera el ID de la asignación de otro proveedor
+podría acceder a ella si la vista no verificara la propiedad.
+
+**Resultado de la auditoría:** Todas las vistas del área Proveedor ya filtraban por propietario
+antes de devolver datos. No se encontró ninguna vista vulnerable:
+
+- `AsignacionRFQDetalleView`, `SolicitudExtensionCreateView` — usan `.get(id=..., id_Proveedor=proveedor)`
+- `AsignacionResponderView`, `AsignacionBorradorDetalleView`, `AsignacionBorradorActualizarView`,
+  `AsignacionEnviarRespuestaView` — usan los helpers `_get_asignacion_mold` / `_get_asignacion_trimming`
+  que siempre incluyen `id_Proveedor=proveedor` en el filtro
+- `AsignacionesProveedorView` — filtra `id_Proveedor=proveedor` en el queryset base
+
+**Protección adicional aplicada:** El endpoint `DELETE /api_general/v1/rfq/<id>/borrador/`
+implementa verificación de propiedad explícita:
 
 ```python
-class IsProveedor(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'Pro'
-    # ← sin has_object_permission
-```
-
-**Corrección sugerida:** Auditar todas las vistas del área Proveedor y Asignaciones para
-verificar que filtran por `proveedor = request.user` (o equivalente) antes de devolver datos.
-Alternativamente, agregar `has_object_permission` a las clases de permiso relevantes:
-
-```python
-def has_object_permission(self, request, view, obj):
-    return obj.proveedor.user == request.user
+if rfq.created_by != request.user:
+    return Response({'error': '...'}, status=403)
 ```
 
 ---
@@ -350,9 +347,9 @@ críticos y altos:
 - [x] `DEBUG=False` en producción
 - [x] `ALLOWED_HOSTS` con el dominio real
 - [ ] Duración de cookie del refresh token igual a `REFRESH_TOKEN_LIFETIME`
-- [ ] Rate limiting activo en `/auth/login/`
+- [x] Rate limiting activo en `/auth/login/`
 - [ ] `DEFAULT_PERMISSION_CLASSES` configurado en DRF
 - [ ] CORS configurado con el dominio real del frontend
 - [ ] `CELERY_BROKER_URL` con credenciales reales (no `guest:guest`)
 - [ ] `djoser` usando `users.permissions.IsAdminUser`
-- [ ] Auditoría de IDOR en vistas de Proveedor completada
+- [x] Auditoría de IDOR en vistas de Proveedor completada
