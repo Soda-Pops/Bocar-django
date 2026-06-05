@@ -1,9 +1,17 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from django.conf import settings
 
 from RFQ_Mold.models import RFQ_Mold
 from RFQ_Trimming.models import RFQ_Trimming
+
+from users.permissions import IsAdminUser
+from historial.models import RFQHistorial
+from historial.services import registrar_historial
+from notificaciones import tasks as notif_tasks
 
 import calendar
 
@@ -74,3 +82,88 @@ class RFQGlobalCountView(APIView):
             },
             'histograma': hist
         })
+
+
+_TIPO_MAP = {
+    'mold':     (RFQ_Mold,     RFQHistorial.Tipo.MOLD),
+    'trimming': (RFQ_Trimming, RFQHistorial.Tipo.TRIMMING),
+}
+
+
+class RFQLogicalDeleteView(APIView):
+    """
+    PATCH /api_general/v1/rfq/<id>/delete/?tipo=mold|trimming
+    Borrado lógico unificado. Requiere Com Admin.
+    """
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        tipo = request.query_params.get('tipo', '').lower()
+        if tipo not in _TIPO_MAP:
+            return Response(
+                {'error': 'El parámetro "tipo" es requerido y debe ser "mold" o "trimming".'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        modelo, historial_tipo = _TIPO_MAP[tipo]
+        rfq = get_object_or_404(modelo, pk=pk)
+
+        if rfq.logical_delete:
+            return Response(
+                {'error': 'Este registro ya fue eliminado.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        rfq.logical_delete = True
+        rfq.save()
+
+        registrar_historial(
+            rfq_tipo=historial_tipo,
+            rfq_id=rfq.id,
+            evento=RFQHistorial.Evento.CANCELACION,
+            actor=request.user,
+        )
+
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_cancelacion_confirmada.delay(rfq.id, tipo, request.user.id)
+
+        return Response(
+            {'message': 'Registro eliminado correctamente.'},
+            status=status.HTTP_200_OK,
+        )
+
+
+class RFQBorradorDeleteView(APIView):
+    """
+    DELETE /api_general/v1/rfq/<id>/borrador/?tipo=mold|trimming
+    Eliminación física de un RFQ en borrador (En_Ind).
+    Solo puede hacerlo el usuario que lo creó.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        tipo = request.query_params.get('tipo', '').lower()
+        if tipo not in _TIPO_MAP:
+            return Response(
+                {'error': 'El parámetro "tipo" es requerido y debe ser "mold" o "trimming".'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        modelo, _ = _TIPO_MAP[tipo]
+        rfq = get_object_or_404(modelo, pk=pk)
+
+        if rfq.status != modelo.Status.INDUSTRIALIZACION:
+            return Response(
+                {'error': 'Solo se pueden eliminar RFQs en borrador (En_Ind).'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if rfq.created_by != request.user:
+            return Response(
+                {'error': 'No tienes permiso para eliminar este borrador.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        rfq.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

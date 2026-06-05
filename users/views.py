@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
@@ -15,6 +16,9 @@ class LoginView(APIView):
     Recibe email y password, devuelve los tokens en cookies HttpOnly
     El body de respuesta NO incluye los tokens — van solo en las cookies
     """
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope   = 'login'
+
     def post(self, request):
         email    = request.data.get('email')
         password = request.data.get('password')
