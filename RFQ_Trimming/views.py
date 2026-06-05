@@ -1,4 +1,4 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, serializers as drf_serializers
 from rest_framework.views import APIView
 from rest_framework.generics import UpdateAPIView
 from rest_framework.response import Response
@@ -9,8 +9,6 @@ from django.db.models import Count
 from .models import RFQ_Trimming, RFQ_Trimming_EditRequest
 from .serializers import RFQTrimmingCreateSerializer, RFQTrimmingDetailSerializer, RFQTrimmingListSerializer, TrimmingEditRequestCreateSerializer, TrimmingEditRequestListSerializer, TrimmingEditRequestApproveSerializer
 
-# Importamos los permisos personalizados definidos en la app
-# Si los tienes en otra app ajusta el import: from apps.rfq_mold.permissions import ...
 from users.permissions import IsAdminUser, IsComercializacionAdmin
 
 from notificaciones import tasks as notif_tasks
@@ -19,13 +17,15 @@ from django.conf import settings
 
 from historial.models import RFQHistorial
 from historial.services import registrar_historial
+from drf_spectacular.utils import extend_schema, inline_serializer
+
 
 class RFQTrimmingListCreateView(generics.ListCreateAPIView):
     """
     GET  /rfq-trimmings/
     Devuelve la lista de RFQ Trimmings activos (logical_delete=False) con campos resumidos.
     Campos: id, status, created_by, created_by_name, created_date, due_date, complete, logical_delete.
- 
+
     POST /rfq-trimmings/
     Crea un nuevo RFQ Trimming. Acepta archivos opcionales bajo el key 'archivos'.
     El campo created_by se asigna automáticamente con el usuario autenticado.
@@ -33,20 +33,72 @@ class RFQTrimmingListCreateView(generics.ListCreateAPIView):
     """
     permission_classes = [IsAuthenticated]
     parser_classes     = [MultiPartParser, JSONParser]
- 
+
+    @extend_schema(
+        tags=['RFQ Trimming'],
+        summary='Listar RFQ Trimmings',
+        description=(
+            'Devuelve todos los RFQ Trimmings activos (`logical_delete=False`) con campos resumidos.\n\n'
+            'Requiere autenticación.'
+        ),
+        responses={200: RFQTrimmingListSerializer(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=['RFQ Trimming'],
+        summary='Crear RFQ Trimming',
+        description=(
+            'Crea un nuevo RFQ Trimming. El campo `created_by` se asigna automáticamente '
+            'con el usuario autenticado.\n\n'
+            'Enviar como `multipart/form-data` si se adjuntan archivos bajo el key `archivos`.\n\n'
+            'El status `En_Pro` no puede asignarse en la creación — solo mediante el flujo '
+            'de asignaciones.\n\n'
+            'Requiere autenticación.'
+        ),
+        request=RFQTrimmingCreateSerializer,
+        responses={
+            201: RFQTrimmingDetailSerializer,
+            400: inline_serializer(
+                name='RFQTrimmingCreateBadRequest',
+                fields={'detail': drf_serializers.CharField()},
+            ),
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
     def get_queryset(self):
         return RFQ_Trimming.objects.filter(logical_delete=False)
- 
+
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return RFQTrimmingCreateSerializer
         return RFQTrimmingListSerializer
- 
+
     def perform_create(self, serializer):
         archivos = self.request.FILES.getlist('archivos')
         serializer.save(created_by=self.request.user, archivos=archivos)
- 
- 
+
+
+@extend_schema(
+    tags=['RFQ Trimming'],
+    summary='Detalle de RFQ Trimming',
+    description=(
+        'Devuelve todos los campos del RFQ Trimming por ID, incluyendo archivos adjuntos '
+        'y el nombre del creador (`created_by_name`).\n\n'
+        'También devuelve registros con `logical_delete=True` para consulta de historial.\n\n'
+        'Requiere autenticación.'
+    ),
+    responses={
+        200: RFQTrimmingDetailSerializer,
+        404: inline_serializer(
+            name='RFQTrimmingDetailNotFound',
+            fields={'detail': drf_serializers.CharField()},
+        ),
+    },
+)
 class RFQTrimmingDetailView(generics.RetrieveAPIView):
     """
     GET /rfq-trimmings/<id>/
@@ -55,11 +107,11 @@ class RFQTrimmingDetailView(generics.RetrieveAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class   = RFQTrimmingDetailSerializer
- 
+
     def get_queryset(self):
         return RFQ_Trimming.objects.all()
- 
- 
+
+
 class RFQTrimmingLogicalDeleteView(UpdateAPIView):
     """
     PATCH /rfq-trimmings/<id>/delete/
@@ -71,7 +123,33 @@ class RFQTrimmingLogicalDeleteView(UpdateAPIView):
     permission_classes = [IsComercializacionAdmin]
     queryset           = RFQ_Trimming.objects.all()
     http_method_names  = ['patch']
- 
+    serializer_class   = drf_serializers.Serializer  # requerido por UpdateAPIView; no se usa en partial_update
+
+    @extend_schema(
+        tags=['RFQ Trimming'],
+        summary='Borrado lógico de RFQ Trimming',
+        description=(
+            'Marca el RFQ Trimming como eliminado (`logical_delete=True`). '
+            'El registro **no** se borra físicamente de la base de datos.\n\n'
+            'Retorna 400 si el registro ya tenía `logical_delete=True`.\n\n'
+            'Requiere `is_admin=True` y `role=Com`.'
+        ),
+        request=None,
+        responses={
+            200: inline_serializer(
+                name='RFQTrimmingDeleteResponse',
+                fields={'message': drf_serializers.CharField()},
+            ),
+            400: inline_serializer(
+                name='RFQTrimmingDeleteBadRequest',
+                fields={'error': drf_serializers.CharField()},
+            ),
+            404: inline_serializer(
+                name='RFQTrimmingDeleteNotFound',
+                fields={'detail': drf_serializers.CharField()},
+            ),
+        },
+    )
     def partial_update(self, request, *args, **kwargs):
         rfq = self.get_object()
  
@@ -100,6 +178,27 @@ class RFQTrimmingLogicalDeleteView(UpdateAPIView):
         )
 
 
+@extend_schema(
+    tags=['RFQ Trimming — Solicitudes de edición'],
+    summary='Crear solicitud de edición',
+    description=(
+        'Solicita regresar el RFQ Trimming de `En_Com` a `En_Ind` para que '
+        'Industrialización pueda modificarlo.\n\n'
+        'Validaciones:\n'
+        '- El RFQ debe estar en status `En_Com`.\n'
+        '- No puede existir ya una solicitud `Pendiente` para el mismo RFQ.\n\n'
+        'El campo `requested_by` se asigna automáticamente.\n\n'
+        'Requiere autenticación.'
+    ),
+    request=TrimmingEditRequestCreateSerializer,
+    responses={
+        201: TrimmingEditRequestCreateSerializer,
+        400: inline_serializer(
+            name='TrimmingEditRequestCreateBadRequest',
+            fields={'detail': drf_serializers.CharField()},
+        ),
+    },
+)
 class TrimmingEditRequestCreateView(generics.CreateAPIView):
     """
     POST /rfq-trimmings/edit-requests/create/
@@ -111,13 +210,24 @@ class TrimmingEditRequestCreateView(generics.CreateAPIView):
     """
     serializer_class   = TrimmingEditRequestCreateSerializer
     permission_classes = [IsAuthenticated]
- 
+
     def perform_create(self, serializer):
         instance = serializer.save(requested_by=self.request.user)
         if settings.NOTIFICATIONS_ENABLED:
             notif_tasks.notificar_modificacion_rfq.delay(instance.rfq_trimming.id, 'trimming', self.request.user.id, [ROL_COMERCIALIZACION])
 
 
+@extend_schema(
+    tags=['RFQ Trimming — Solicitudes de edición'],
+    summary='Listar solicitudes de edición pendientes',
+    description=(
+        'Devuelve todas las solicitudes de edición de RFQ Trimming con `status=Pendiente`.\n\n'
+        'Campos: `id`, `rfq_trimming`, `rfq_trimming_status`, `requested_by`, `requested_by_name`, '
+        '`requested_at`, `status`, `reason`.\n\n'
+        'Requiere `is_admin=True` y `role=Com`.'
+    ),
+    responses={200: TrimmingEditRequestListSerializer(many=True)},
+)
 class TrimmingEditRequestListView(generics.ListAPIView):
     """
     GET /rfq-trimmings/edit-requests/
@@ -127,11 +237,11 @@ class TrimmingEditRequestListView(generics.ListAPIView):
     """
     serializer_class   = TrimmingEditRequestListSerializer
     permission_classes = [IsComercializacionAdmin]
- 
+
     def get_queryset(self):
         return RFQ_Trimming_EditRequest.objects.filter(status='Pendiente')
- 
- 
+
+
 class TrimmingEditRequestApproveView(UpdateAPIView):
     """
     PATCH /rfq-trimmings/edit-requests/<id>/approve/
@@ -149,6 +259,31 @@ class TrimmingEditRequestApproveView(UpdateAPIView):
     queryset           = RFQ_Trimming_EditRequest.objects.all()
     http_method_names  = ['patch']
 
+    @extend_schema(
+        tags=['RFQ Trimming — Solicitudes de edición'],
+        summary='Aprobar solicitud de edición',
+        description=(
+            'Aprueba una solicitud de edición pendiente. Al aprobar:\n\n'
+            '- La solicitud pasa a `status=Aprobada`.\n'
+            '- El RFQ Trimming cambia su status a `En_Ind`.\n\n'
+            'Validaciones:\n'
+            '- La solicitud debe estar en `status=Pendiente`.\n'
+            '- El RFQ no debe estar en `status=En_Pro`.\n\n'
+            'Requiere `is_admin=True` y `role=Com`.'
+        ),
+        request=TrimmingEditRequestApproveSerializer,
+        responses={
+            200: TrimmingEditRequestApproveSerializer,
+            400: inline_serializer(
+                name='TrimmingEditRequestApproveBadRequest',
+                fields={'detail': drf_serializers.CharField()},
+            ),
+            404: inline_serializer(
+                name='TrimmingEditRequestApproveNotFound',
+                fields={'detail': drf_serializers.CharField()},
+            ),
+        },
+    )
     def partial_update(self, request, *args, **kwargs):
         edit_request = self.get_object()
         rfq          = edit_request.rfq_trimming

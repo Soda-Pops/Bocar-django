@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import serializers as drf_serializers
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.conf import settings
@@ -15,10 +16,87 @@ from notificaciones import tasks as notif_tasks
 
 import calendar
 
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
+
 
 class RFQGlobalCountView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        tags=['Dashboard'],
+        summary='Conteo global de RFQs',
+        description=(
+            'Devuelve los contadores globales de RFQs para el dashboard principal:\n\n'
+            '- **completados**: RFQs con `complete=True` (mold + trimming).\n'
+            '- **en_comercializacion**: RFQs con `status=En_Com`.\n'
+            '- **borradores**: RFQs con `status=En_Ind` del usuario indicado '
+            '(por defecto el usuario autenticado).\n'
+            '- **histograma**: total de RFQs creados por mes del año en curso.\n\n'
+            'Solo incluye registros con `logical_delete=False`.'
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='user_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    'ID del usuario cuyos borradores (En_Ind) se contarán. '
+                    'Si se omite, se usa el usuario autenticado.'
+                ),
+            ),
+        ],
+        responses={
+            200: inline_serializer(
+                name='RFQGlobalCountResponse',
+                fields={
+                    'completados': inline_serializer(
+                        name='CompletadosCount',
+                        fields={
+                            'molds':     drf_serializers.IntegerField(),
+                            'trimmings': drf_serializers.IntegerField(),
+                            'total':     drf_serializers.IntegerField(),
+                        },
+                    ),
+                    'en_comercializacion': inline_serializer(
+                        name='EnComCount',
+                        fields={
+                            'molds':     drf_serializers.IntegerField(),
+                            'trimmings': drf_serializers.IntegerField(),
+                            'total':     drf_serializers.IntegerField(),
+                        },
+                    ),
+                    'borradores': inline_serializer(
+                        name='BorradoresCount',
+                        fields={
+                            'user_id':   drf_serializers.IntegerField(),
+                            'molds':     drf_serializers.IntegerField(),
+                            'trimmings': drf_serializers.IntegerField(),
+                            'total':     drf_serializers.IntegerField(),
+                        },
+                    ),
+                    'histograma': inline_serializer(
+                        name='HistogramaCount',
+                        fields={
+                            'January':   drf_serializers.IntegerField(),
+                            'February':  drf_serializers.IntegerField(),
+                            'March':     drf_serializers.IntegerField(),
+                            'April':     drf_serializers.IntegerField(),
+                            'May':       drf_serializers.IntegerField(),
+                            'June':      drf_serializers.IntegerField(),
+                            'July':      drf_serializers.IntegerField(),
+                            'August':    drf_serializers.IntegerField(),
+                            'September': drf_serializers.IntegerField(),
+                            'October':   drf_serializers.IntegerField(),
+                            'November':  drf_serializers.IntegerField(),
+                            'December':  drf_serializers.IntegerField(),
+                        },
+                    ),
+                },
+            ),
+        },
+    )
     def get(self, request):
 
         # ─── Parámetro opcional: filtrar En_Ind por usuario ───────────────────
