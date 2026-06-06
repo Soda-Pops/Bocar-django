@@ -26,8 +26,7 @@
 | | **Solicitudes de edición** | PATCH | `/api_comercializacion/v1/edit-requests/<id>/aprobar/?tipo=mold\|trimming` | Aprobar una solicitud de edición de Industrialización. Regresa el RFQ a `En_Ind`. Bloqueado si el RFQ ya está en `En_Pro`. | Com / Com Admin |
 | | | PATCH | `/api_comercializacion/v1/edit-requests/<id>/rechazar/?tipo=mold\|trimming` | Rechazar una solicitud de edición. El RFQ permanece en `En_Com`. | Com / Com Admin |
 | | **Extensiones de tiempo** | PATCH | `/api_comercializacion/v1/extension/<id>/resolver/?tipo=mold\|trimming` | Aprobar o rechazar la solicitud de extensión de plazo de un proveedor. Si se aprueba, actualiza el `due_date` de la asignación del proveedor. | Com / Com Admin |
-| | **Borrado lógico** | PATCH | `/api_mold/v1/rfq-molds/<id>/delete/` | Dar de baja un RFQ Mold sin eliminarlo físicamente. | Com Admin |
-| | | PATCH | `/api_trimming/v1/rfq-trimmings/<id>/delete/` | Dar de baja un RFQ Trimming sin eliminarlo físicamente. | Com Admin |
+| | **Borrado lógico** | PATCH | `/api_general/v1/rfq/<id>/delete/?tipo=mold\|trimming` | Dar de baja un RFQ sin eliminarlo físicamente. El tipo se indica con `?tipo=mold` o `?tipo=trimming`. | Cualquier Admin |
 
 ---
 
@@ -45,7 +44,8 @@
 | Rechazar solicitud de edición Trimming | `PATCH /api_comercializacion/v1/edit-requests/5/rechazar/?tipo=trimming` · sin body |
 | Aprobar extensión de tiempo Mold | `PATCH /api_comercializacion/v1/extension/2/resolver/?tipo=mold` · body: `{ "status": "Aprobada" }` |
 | Rechazar extensión de tiempo Trimming | `PATCH /api_comercializacion/v1/extension/4/resolver/?tipo=trimming` · body: `{ "status": "Rechazada" }` |
-| Borrado lógico RFQ Mold (admin) | `PATCH /api_mold/v1/rfq-molds/12/delete/` · sin body |
+| Borrado lógico RFQ Mold (admin) | `PATCH /api_general/v1/rfq/12/delete/?tipo=mold` · sin body |
+| Borrado lógico RFQ Trimming (admin) | `PATCH /api_general/v1/rfq/12/delete/?tipo=trimming` · sin body |
 
 ---
 

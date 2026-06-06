@@ -75,8 +75,13 @@ class RFQCrearView(APIView):
             Enviar como multipart/form-data si se incluyen archivos adjuntos.
             El status inicial debe ser En_Ind.
             Requiere autenticación.
+
+            El cuerpo del request varía según `tipo`:
+            - `tipo=mold` → campos de `RFQMoldCreateSerializer`.
+            - `tipo=trimming` → campos de `RFQTrimmingCreateSerializer`.
         """,
         parameters=[_TIPO_PARAM],
+        request=RFQMoldCreateSerializer,
         responses={
             201: inline_serializer(
                 name='RFQCrearResponse',
@@ -130,8 +135,13 @@ class RFQEditarView(APIView):
             Actualiza los campos de un RFQ. Solo se permite si el RFQ está en
             status En_Ind. Si está en En_Com o En_Pro se retorna 403.
             Requiere autenticación.
+
+            El cuerpo del request varía según `tipo`:
+            - `tipo=mold` → campos de `RFQMoldCreateSerializer` (partial).
+            - `tipo=trimming` → campos de `RFQTrimmingCreateSerializer` (partial).
         """,
         parameters=[_TIPO_PARAM],
+        request=RFQMoldCreateSerializer,
         responses={
             200: inline_serializer(
                 name='RFQEditarResponse',
@@ -237,10 +247,12 @@ class RFQEnviarAComercializacionView(APIView):
         summary="Enviar RFQ a Comercialización",
         description="""
             Cambia el status del RFQ de En_Ind a En_Com (submit to purchasing).
-            Solo se permite si el RFQ está en En_Ind.
+            Solo se permite si el RFQ está en En_Ind y tiene al menos un archivo adjunto.
+            No requiere cuerpo en el request.
             Requiere autenticación.
         """,
         parameters=[_TIPO_PARAM],
+        request=None,
         responses={
             200: inline_serializer(
                 name='RFQEnviarResponse',
@@ -346,8 +358,13 @@ class RFQSolicitarEdicionView(APIView):
             Crea una solicitud para que Comercialización regrese el RFQ a En_Ind.
             El RFQ debe estar en En_Com y no puede haber una solicitud Pendiente activa.
             Requiere autenticación.
+
+            El cuerpo varía según `tipo`:
+            - `tipo=mold` → `{ "rfq_mold": <id>, "reason": "..." }`.
+            - `tipo=trimming` → `{ "rfq_trimming": <id>, "reason": "..." }`.
         """,
         parameters=[_TIPO_PARAM],
+        request=MoldEditRequestCreateSerializer,
         responses={
             201: inline_serializer(
                 name='SolicitarEdicionResponse',

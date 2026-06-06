@@ -1,12 +1,16 @@
 # general/views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, serializers as drf_serializers
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
 from django.conf import settings
+
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 
 
 class LoginView(APIView):
@@ -15,6 +19,54 @@ class LoginView(APIView):
     Recibe email y password, devuelve los tokens en cookies HttpOnly
     El body de respuesta NO incluye los tokens — van solo en las cookies
     """
+
+    @extend_schema(
+        tags=['Autenticación'],
+        summary='Iniciar sesión',
+        description=(
+            'Autentica al usuario con email y contraseña. '
+            'Los tokens JWT (access y refresh) se envían en cookies HttpOnly y **no** aparecen en el body.\n\n'
+            '- `access_token` cookie: 15 minutos de vida.\n'
+            '- `refresh_token` cookie: 24 horas de vida.\n\n'
+            'El body de respuesta devuelve únicamente los datos del usuario.'
+        ),
+        request=inline_serializer(
+            name='LoginRequest',
+            fields={
+                'email':    drf_serializers.EmailField(),
+                'password': drf_serializers.CharField(),
+            },
+        ),
+        responses={
+            200: inline_serializer(
+                name='LoginResponse',
+                fields={
+                    'message': drf_serializers.CharField(),
+                    'user': inline_serializer(
+                        name='LoginUserData',
+                        fields={
+                            'id':       drf_serializers.IntegerField(),
+                            'email':    drf_serializers.EmailField(),
+                            'username': drf_serializers.CharField(),
+                            'role':     drf_serializers.CharField(),
+                            'is_admin': drf_serializers.BooleanField(),
+                        },
+                    ),
+                },
+            ),
+            401: inline_serializer(
+                name='LoginUnauthorized',
+                fields={'error': drf_serializers.CharField()},
+            ),
+        },
+        examples=[
+            OpenApiExample(
+                'Credenciales correctas',
+                value={'email': 'usuario@bocar.com', 'password': 'contraseña123'},
+                request_only=True,
+            ),
+        ],
+    )
     def post(self, request):
         email    = request.data.get('email')
         password = request.data.get('password')
@@ -76,6 +128,26 @@ class LogoutView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        tags=['Autenticación'],
+        summary='Cerrar sesión',
+        description=(
+            'Invalida el refresh token (lo añade a la blacklist) y elimina '
+            'las cookies `access_token` y `refresh_token`.\n\n'
+            'Requiere estar autenticado (cookie `access_token` válida).'
+        ),
+        request=None,
+        responses={
+            200: inline_serializer(
+                name='LogoutResponse',
+                fields={'message': drf_serializers.CharField()},
+            ),
+            400: inline_serializer(
+                name='LogoutBadRequest',
+                fields={'error': drf_serializers.CharField()},
+            ),
+        },
+    )
     def post(self, request):
         refresh_token = request.COOKIES.get('refresh_token')
 
@@ -110,6 +182,27 @@ class RefreshTokenView(APIView):
     Lee el refresh token de la cookie, genera un nuevo access token
     y lo devuelve en una nueva cookie
     """
+
+    @extend_schema(
+        tags=['Autenticación'],
+        summary='Renovar access token',
+        description=(
+            'Lee el `refresh_token` de la cookie HttpOnly y emite un nuevo `access_token` '
+            '(también en cookie HttpOnly). No requiere body.\n\n'
+            'Si `ROTATE_REFRESH_TOKENS=True` también se renueva el refresh token.'
+        ),
+        request=None,
+        responses={
+            200: inline_serializer(
+                name='RefreshResponse',
+                fields={'message': drf_serializers.CharField()},
+            ),
+            401: inline_serializer(
+                name='RefreshUnauthorized',
+                fields={'error': drf_serializers.CharField()},
+            ),
+        },
+    )
     def post(self, request):
         refresh_token = request.COOKIES.get('refresh_token')
 
@@ -165,6 +258,32 @@ class MeView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        tags=['Autenticación'],
+        summary='Sesión activa — datos del usuario',
+        description=(
+            'Valida el `access_token` de la cookie y devuelve los datos del usuario autenticado.\n\n'
+            'El frontend debe llamar este endpoint al iniciar la aplicación para reconstruir '
+            'la sesión sin leer localStorage ni decodificar el token en el cliente.\n\n'
+            'Retorna 401 si la cookie expiró o no existe.'
+        ),
+        responses={
+            200: inline_serializer(
+                name='MeResponse',
+                fields={
+                    'id':       drf_serializers.IntegerField(),
+                    'email':    drf_serializers.EmailField(),
+                    'username': drf_serializers.CharField(),
+                    'role':     drf_serializers.ChoiceField(choices=['SinRol', 'Ind', 'Com', 'Pro']),
+                    'is_admin': drf_serializers.BooleanField(),
+                },
+            ),
+            401: inline_serializer(
+                name='MeUnauthorized',
+                fields={'detail': drf_serializers.CharField()},
+            ),
+        },
+    )
     def get(self, request):
         user = request.user
         return Response({

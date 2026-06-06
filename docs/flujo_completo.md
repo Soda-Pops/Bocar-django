@@ -286,19 +286,25 @@ Crea una solicitud para que Comercialización regrese el RFQ a `En_Ind` y permit
 
 ---
 
-#### `PATCH /api_mold/v1/rfq-molds/<id>/delete/`
-#### `PATCH /api_trimming/v1/rfq-trimmings/<id>/delete/`
+#### `PATCH /api_general/v1/rfq/<id>/delete/?tipo=mold|trimming`
 
-Borrado lógico del RFQ. El registro permanece en base de datos con `logical_delete = True`. **Requiere `is_admin = True`.**
+Borrado lógico del RFQ. El registro permanece en base de datos con `logical_delete = True`. **Requiere `is_admin = True` (cualquier rol).**
+
+**Query param requerido:** `?tipo=mold` o `?tipo=trimming`
 
 **Body:** vacío
 
-**Respuesta `200`:** RFQ con `logical_delete: true`.
+**Respuesta `200`:**
+```json
+{ "message": "Registro eliminado correctamente." }
+```
 
 **Errores:**
 | Código | Motivo |
 |---|---|
-| `403` | El usuario no es administrador |
+| `400` | Falta `?tipo` o valor inválido |
+| `400` | El RFQ ya estaba marcado como eliminado |
+| `403` | El usuario no tiene `is_admin = True` |
 
 ---
 

@@ -31,6 +31,13 @@ from .serializers import (
     SolicitudExtensionMoldResolverSerializer,
     SolicitudExtensionTrimmingResolverSerializer,
 )
+from .services import (
+    close_expired_assignments,
+    close_if_expired,
+    close_rfq_if_all_assignments_answered,
+    mark_assignment_answered_and_closed,
+    validate_assignment_can_receive_quote,
+)
 from RFQ_Mold.serializers import RFQMoldDetailSerializer
 from RFQ_Trimming.serializers import RFQTrimmingDetailSerializer
 
@@ -79,6 +86,8 @@ class AsignacionesProveedorView(APIView):
         }
     )
     def get(self, request):
+        close_expired_assignments()
+
         proveedor = request.user.proveedor
         base_mold = Asignacion_Proveedor_Mold.objects.filter(
             id_Proveedor=proveedor, logical_delete=False
@@ -153,6 +162,7 @@ class AsignacionRFQDetalleView(APIView):
                     {'detail': 'Asignación no encontrada o no pertenece a este proveedor.'},
                     status=status.HTTP_404_NOT_FOUND,
                 )
+            close_if_expired(asignacion)
             serializer = RFQMoldDetailSerializer(asignacion.id_RFQ_Mold)
 
         else:
@@ -167,6 +177,7 @@ class AsignacionRFQDetalleView(APIView):
                     {'detail': 'Asignación no encontrada o no pertenece a este proveedor.'},
                     status=status.HTTP_404_NOT_FOUND,
                 )
+            close_if_expired(asignacion)
             serializer = RFQTrimmingDetailSerializer(asignacion.id_RFQ_Trimming)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -213,8 +224,13 @@ class AsignacionResponderView(APIView):
             No marca la asignación como respondida.
             Para enviar definitivamente usar el endpoint /enviar/.
             Requiere role='Pro'.
+
+            El cuerpo del request varía según el parámetro `tipo`:
+            - `tipo=mold` → campos de `CostBreakdownMold` (incluye `set_of_cavities` anidado opcional).
+            - `tipo=trimming` → campos de `CostBreakdownTrimming`.
         """,
         parameters=[_TIPO_PARAM],
+        request=CostBreakdownMoldCreateSerializer,
         responses={
             201: inline_serializer('BorradorCreadoResponse',   fields={'detail': serializers.CharField()}),
             400: inline_serializer('BorradorCreadoBadRequest', fields={'detail': serializers.CharField()}),
@@ -234,10 +250,11 @@ class AsignacionResponderView(APIView):
             asignacion = _get_asignacion_mold(id_asignacion, proveedor)
             if not asignacion:
                 return Response(_404_asignacion, status=status.HTTP_404_NOT_FOUND)
+            can_quote, error = validate_assignment_can_receive_quote(asignacion)
+            if not can_quote:
+                return Response({'detail': error}, status=status.HTTP_403_FORBIDDEN)
             if hasattr(asignacion, 'cost_breakdown'):
                 return Response({'detail': 'Ya existe un borrador o respuesta para esta asignación.'}, status=status.HTTP_409_CONFLICT)
-            if asignacion.due_date < date.today():
-                return Response(_403_vencida, status=status.HTTP_403_FORBIDDEN)
             serializer = CostBreakdownMoldCreateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save(id_asignacion=asignacion, last_edited_by=request.user, status='draft')
@@ -245,10 +262,11 @@ class AsignacionResponderView(APIView):
             asignacion = _get_asignacion_trimming(id_asignacion, proveedor)
             if not asignacion:
                 return Response(_404_asignacion, status=status.HTTP_404_NOT_FOUND)
+            can_quote, error = validate_assignment_can_receive_quote(asignacion)
+            if not can_quote:
+                return Response({'detail': error}, status=status.HTTP_403_FORBIDDEN)
             if hasattr(asignacion, 'cost_breakdown'):
                 return Response({'detail': 'Ya existe un borrador o respuesta para esta asignación.'}, status=status.HTTP_409_CONFLICT)
-            if asignacion.due_date < date.today():
-                return Response(_403_vencida, status=status.HTTP_403_FORBIDDEN)
             serializer = CostBreakdownTrimmingCreateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save(id_asignacion=asignacion, last_edited_by=request.user, status='draft')
@@ -280,6 +298,7 @@ class AsignacionBorradorDetalleView(APIView):
             asignacion = _get_asignacion_mold(id_asignacion, proveedor)
             if not asignacion:
                 return Response(_404_asignacion, status=status.HTTP_404_NOT_FOUND)
+            close_if_expired(asignacion)
             if not hasattr(asignacion, 'cost_breakdown'):
                 return Response({'detail': 'No hay borrador para esta asignación.'}, status=status.HTTP_404_NOT_FOUND)
             return Response(CostBreakdownMoldDetailSerializer(asignacion.cost_breakdown).data)
@@ -287,6 +306,7 @@ class AsignacionBorradorDetalleView(APIView):
             asignacion = _get_asignacion_trimming(id_asignacion, proveedor)
             if not asignacion:
                 return Response(_404_asignacion, status=status.HTTP_404_NOT_FOUND)
+            close_if_expired(asignacion)
             if not hasattr(asignacion, 'cost_breakdown'):
                 return Response({'detail': 'No hay borrador para esta asignación.'}, status=status.HTTP_404_NOT_FOUND)
             return Response(CostBreakdownTrimmingDetailSerializer(asignacion.cost_breakdown).data)
@@ -301,8 +321,14 @@ class AsignacionBorradorActualizarView(APIView):
 
     @extend_schema(
         summary="Actualizar borrador",
-        description="Actualiza campos del borrador. Solo permitido si status='draft'. Requiere role='Pro'.",
+        description=(
+            "Actualiza campos del borrador. Solo permitido si `status='draft'`. Requiere role='Pro'.\n\n"
+            "El cuerpo del request varía según el parámetro `tipo`: "
+            "`tipo=mold` usa los campos de `CostBreakdownMold`; "
+            "`tipo=trimming` usa los campos de `CostBreakdownTrimming`."
+        ),
         parameters=[_TIPO_PARAM],
+        request=CostBreakdownMoldUpdateSerializer,
         responses={
             200: inline_serializer('BorradorActualizadoResponse', fields={'detail': serializers.CharField()}),
             403: inline_serializer('BorradorActualizadoForbidden', fields={'detail': serializers.CharField()}),
@@ -320,6 +346,9 @@ class AsignacionBorradorActualizarView(APIView):
             asignacion = _get_asignacion_mold(id_asignacion, proveedor)
             if not asignacion:
                 return Response(_404_asignacion, status=status.HTTP_404_NOT_FOUND)
+            can_quote, error = validate_assignment_can_receive_quote(asignacion)
+            if not can_quote:
+                return Response({'detail': error}, status=status.HTTP_403_FORBIDDEN)
             if not hasattr(asignacion, 'cost_breakdown'):
                 return Response({'detail': 'No hay borrador para actualizar.'}, status=status.HTTP_404_NOT_FOUND)
             breakdown = asignacion.cost_breakdown
@@ -332,6 +361,9 @@ class AsignacionBorradorActualizarView(APIView):
             asignacion = _get_asignacion_trimming(id_asignacion, proveedor)
             if not asignacion:
                 return Response(_404_asignacion, status=status.HTTP_404_NOT_FOUND)
+            can_quote, error = validate_assignment_can_receive_quote(asignacion)
+            if not can_quote:
+                return Response({'detail': error}, status=status.HTTP_403_FORBIDDEN)
             if not hasattr(asignacion, 'cost_breakdown'):
                 return Response({'detail': 'No hay borrador para actualizar.'}, status=status.HTTP_404_NOT_FOUND)
             breakdown = asignacion.cost_breakdown
@@ -357,8 +389,10 @@ class AsignacionEnviarRespuestaView(APIView):
         description="""
             Cambia el borrador de status draft a submitted y marca la asignación
             como respondida. No se puede revertir. Requiere role='Pro'.
+            No requiere cuerpo en el request.
         """,
         parameters=[_TIPO_PARAM],
+        request=None,
         responses={
             200: inline_serializer('EnviarRespuestaResponse',  fields={'detail': serializers.CharField()}),
             403: inline_serializer('EnviarRespuestaForbidden', fields={'detail': serializers.CharField()}),
@@ -377,33 +411,50 @@ class AsignacionEnviarRespuestaView(APIView):
             asignacion = _get_asignacion_mold(id_asignacion, proveedor)
             if not asignacion:
                 return Response(_404_asignacion, status=status.HTTP_404_NOT_FOUND)
+            can_quote, error = validate_assignment_can_receive_quote(asignacion)
+            if not can_quote:
+                return Response({'detail': error}, status=status.HTTP_403_FORBIDDEN)
             if not hasattr(asignacion, 'cost_breakdown'):
                 return Response({'detail': 'No hay borrador para enviar. Crea uno primero.'}, status=status.HTTP_404_NOT_FOUND)
             breakdown = asignacion.cost_breakdown
             if breakdown.status == Cost_Breakdown_Mold.Status.SUBMITTED:
                 return Response({'detail': 'Esta respuesta ya fue enviada.'}, status=status.HTTP_409_CONFLICT)
-            if asignacion.due_date < date.today():
-                return Response(_403_vencida, status=status.HTTP_403_FORBIDDEN)
             breakdown.status = Cost_Breakdown_Mold.Status.SUBMITTED
             breakdown.last_edited_by = request.user
             breakdown.save(update_fields=['status', 'last_edited_by'])
+            rfq = asignacion.id_RFQ_Mold
         else:
             asignacion = _get_asignacion_trimming(id_asignacion, proveedor)
             if not asignacion:
                 return Response(_404_asignacion, status=status.HTTP_404_NOT_FOUND)
+            can_quote, error = validate_assignment_can_receive_quote(asignacion)
+            if not can_quote:
+                return Response({'detail': error}, status=status.HTTP_403_FORBIDDEN)
             if not hasattr(asignacion, 'cost_breakdown'):
                 return Response({'detail': 'No hay borrador para enviar. Crea uno primero.'}, status=status.HTTP_404_NOT_FOUND)
             breakdown = asignacion.cost_breakdown
             if breakdown.status == Cost_Breakdown_Trimming.Status.SUBMITTED:
                 return Response({'detail': 'Esta respuesta ya fue enviada.'}, status=status.HTTP_409_CONFLICT)
-            if asignacion.due_date < date.today():
-                return Response(_403_vencida, status=status.HTTP_403_FORBIDDEN)
             breakdown.status = Cost_Breakdown_Trimming.Status.SUBMITTED
             breakdown.last_edited_by = request.user
             breakdown.save(update_fields=['status', 'last_edited_by'])
+            rfq = asignacion.id_RFQ_Trimming
 
-        asignacion.is_answered = True
-        asignacion.save(update_fields=['is_answered'])
+        mark_assignment_answered_and_closed(asignacion)
+        rfq_completed = close_rfq_if_all_assignments_answered(rfq)
+
+        rfq = asignacion.id_RFQ_Mold if tipo == 'mold' else asignacion.id_RFQ_Trimming
+
+        registrar_historial(
+            rfq_tipo = tipo,
+            rfq_id   = rfq.id,
+            evento   = RFQHistorial.Evento.COTIZACION_RECIBIDA,
+            actor    = request.user,
+            detalle  = {'proveedor': proveedor.company_name},
+        )
+
+        if settings.NOTIFICATIONS_ENABLED:
+            notif_tasks.notificar_cotizacion_recibida.delay(rfq.id, tipo, request.user.id)
 
         rfq = asignacion.id_RFQ_Mold if tipo == 'mold' else asignacion.id_RFQ_Trimming
 
@@ -449,6 +500,7 @@ class SolicitudExtensionCreateView(APIView):
                 enum=['mold', 'trimming'],
             )
         ],
+        request=SolicitudExtensionMoldCreateSerializer,
         responses={
             201: inline_serializer(
                 name='ExtensionSolicitadaResponse',
@@ -558,6 +610,7 @@ class SolicitudExtensionResolverView(APIView):
                 enum=['mold', 'trimming'],
             )
         ],
+        request=SolicitudExtensionMoldResolverSerializer,
         responses={
             200: inline_serializer(
                 name='ExtensionResueltaResponse',

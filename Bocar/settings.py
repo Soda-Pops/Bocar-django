@@ -15,6 +15,7 @@ from pathlib import Path
 from datetime import timedelta
 
 from dotenv import load_dotenv
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',  # Habilita django-cors-headers para que el backend pueda responder solicitudes CORS del frontend.
     'rest_framework',
     'users',
     'djoser',
@@ -69,6 +71,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'users.authentication.CookieJWTAuthentication',
     ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '5/min',
+    },
 }
 
 DJOSER = {
@@ -106,6 +114,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Agrega los headers CORS antes de que otros middlewares puedan generar la respuesta.
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -114,6 +123,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOWED_ORIGINS = [  # Define explicitamente que origenes del frontend pueden llamar al backend desde el navegador.
+    'http://localhost:5173',  # Permite peticiones desde Vite cuando el frontend corre en localhost.
+    'http://127.0.0.1:5173',  # Permite peticiones desde Vite cuando el frontend usa la IP local en lugar de localhost.
+]  # Cierra la lista de origenes permitidos para evitar aceptar dominios no autorizados.
+CORS_ALLOW_CREDENTIALS = True  # Permite enviar y recibir cookies HttpOnly en solicitudes cross-origin del frontend.
 
 ROOT_URLCONF = 'Bocar.urls'
 
@@ -184,6 +199,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+MEDIA_URL  = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # ---------------------------------------------------------------------------
 # Email — Microsoft 365 (Office 365)
 # El backend se controla por la variable de entorno EMAIL_BACKEND.
@@ -211,6 +229,12 @@ CELERY_ACCEPT_CONTENT    = ['json']
 CELERY_TASK_SERIALIZER   = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE          = TIME_ZONE
+CELERY_BEAT_SCHEDULE = {
+    'cerrar-asignaciones-vencidas-cada-hora': {
+        'task': 'Asignaciones.tasks.cerrar_asignaciones_vencidas',
+        'schedule': crontab(minute=0),
+    },
+}
 
 
 
