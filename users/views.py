@@ -27,7 +27,7 @@ class LoginView(APIView):
             'Autentica al usuario con email y contraseña. '
             'Los tokens JWT (access y refresh) se envían en cookies HttpOnly y **no** aparecen en el body.\n\n'
             '- `access_token` cookie: 15 minutos de vida.\n'
-            '- `refresh_token` cookie: 24 horas de vida.\n\n'
+            '- `refresh_token` cookie: 10 horas de vida.\n\n'
             'El body de respuesta devuelve únicamente los datos del usuario.'
         ),
         request=inline_serializer(
@@ -71,6 +71,12 @@ class LoginView(APIView):
         email    = request.data.get('email')
         password = request.data.get('password')
 
+        if not email or not password:
+            return Response(
+                {'error': 'Email y contraseña son requeridos.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         user = authenticate(request, email=email, password=password)
 
         if user is None:
@@ -109,13 +115,14 @@ class LoginView(APIView):
         )
 
         # ── Cookie del Refresh Token ─────────────────────────────────────────
+        refresh_lifetime = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
         response.set_cookie(
             key      = 'refresh_token',
             value    = str(refresh),
             httponly = True,
             secure   = settings.COOKIE_SECURE,
             samesite = settings.COOKIE_SAMESITE,
-            max_age  = 24 * 60 * 60,    # 1 día en segundos
+            max_age  = refresh_lifetime,
         )
 
         return response
@@ -230,13 +237,14 @@ class RefreshTokenView(APIView):
 
             # Si ROTATE_REFRESH_TOKENS=True, también actualizamos el refresh
             if settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS'):
+                refresh_lifetime = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
                 response.set_cookie(
                     key      = 'refresh_token',
                     value    = str(refresh),
                     httponly = True,
                     secure   = settings.COOKIE_SECURE,
                     samesite = settings.COOKIE_SAMESITE,
-                    max_age  = 24 * 60 * 60,
+                    max_age  = refresh_lifetime,
                 )
 
             return response
