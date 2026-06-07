@@ -58,12 +58,14 @@ INSTALLED_APPS = [
     'Prov_RFQ_Trimming',
     'Comercializacion',
     'Industrializacion',
+    'modulo_IA',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'django_countries',
     'notificaciones',
     'historial',
+    'chatbot',
 ]
 
 REST_FRAMEWORK = {
@@ -246,3 +248,13 @@ CELERY_BEAT_SCHEDULE = {
 # permanente en producción.
 # ---------------------------------------------------------------------------
 NOTIFICATIONS_ENABLED = os.environ.get('NOTIFICATIONS_ENABLED', 'False').lower() in ('true', '1', 'yes')
+
+# ---------------------------------------------------------------------------
+# Chatbot / LLM
+# LLM_BACKEND: 'gemini' (default) | 'local' (Ollama en localhost)
+# ---------------------------------------------------------------------------
+LLM_BACKEND   = os.environ.get('LLM_BACKEND', 'gemini')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GEMINI_MODEL   = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')
+LOCAL_LLM_URL  = os.environ.get('LOCAL_LLM_URL', 'http://localhost:11434')
+LOCAL_LLM_MODEL = os.environ.get('LOCAL_LLM_MODEL', 'llama3.2')

@@ -48,3 +48,16 @@ class IsProveedor(BasePermission):
             request.user.is_authenticated and
             request.user.role == 'Pro'
         )
+
+class IsSistemas(BasePermission):
+    """
+    Solo usuarios con role='IT'.
+    Usado en: endpoints de administración del sistema.
+    """
+    message = "Acceso denegado: se requiere ser un usuario del área de Sistemas."
+ 
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            request.user.role == 'IT'
+        )
