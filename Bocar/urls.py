@@ -34,6 +34,9 @@ urlpatterns = [
     # Historial / auditoría de RFQs -----------------------------------
     path('api_historial/v1/', include('historial.urls')),
 
+    # Chatbot ---------------------------------------------------------
+    path('api_chatbot/v1/', include('chatbot.urls')),
+
     # Esquema OpenAPI -------------------------------------------------
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     
