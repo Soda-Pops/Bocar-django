@@ -83,8 +83,8 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True, # Pide confirmar la contraseña al registrarse
     'PERMISSIONS': {
-        'user_create': ['rest_framework.permissions.IsAdminUser'],
-        'user_list': ['rest_framework.permissions.IsAdminUser'],
+        'user_create': ['users.permissions.IsAdminUser'],
+        'user_list': ['users.permissions.IsAdminUser'],
     }
 }
 

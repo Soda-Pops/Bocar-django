@@ -12,15 +12,15 @@
 |---|---|---|---|
 | 1 | 🔴 Crítico | `SECRET_KEY` hardcodeado en el código fuente | ✅ Corregido |
 | 2 | 🔴 Crítico | `DEBUG` y `ALLOWED_HOSTS` hardcodeados | ✅ Corregido |
-| 3 | 🟠 Alto | Duración de cookie y token JWT desincronizados | ⏳ Pendiente |
+| 3 | 🟠 Alto | Duración de cookie y token JWT desincronizados | ✅ Corregido |
 | 4 | 🟠 Alto | Sin rate limiting en `/auth/login/` | ✅ Corregido |
 | 5 | 🟠 Alto | Sin `DEFAULT_PERMISSION_CLASSES` en DRF | ⏳ Pendiente |
 | 6 | 🟡 Medio | Cambios de rol no se aplican hasta que expira el token (hasta 10h) | ⏳ Pendiente |
 | 7 | 🟡 Medio | Sin permisos a nivel de objeto — riesgo de IDOR | ✅ Corregido |
-| 8 | 🟡 Medio | `IsAdminUser` incorrecto en la config de `djoser` | ⏳ Pendiente |
+| 8 | 🟡 Medio | `IsAdminUser` incorrecto en la config de `djoser` | ✅ Corregido |
 | 9 | 🟢 Bajo | `SameSite=Lax` en lugar de `Strict` | ⏳ Pendiente |
-| 10 | 🟢 Bajo | Sin configuración de CORS | ⏳ Pendiente |
-| 11 | 🟢 Bajo | `LoginView` no valida campos vacíos | ⏳ Pendiente |
+| 10 | 🟢 Bajo | Sin configuración de CORS | ✅ Corregido |
+| 11 | 🟢 Bajo | `LoginView` no valida campos vacíos | ✅ Corregido |
 | 12 | 🟢 Bajo | Credenciales por defecto de Celery/RabbitMQ expuestas | ⏳ Pendiente |
 
 ---
@@ -346,10 +346,10 @@ críticos y altos:
 - [x] `DJANGO_SECRET_KEY` definido en variables de entorno del servidor
 - [x] `DEBUG=False` en producción
 - [x] `ALLOWED_HOSTS` con el dominio real
-- [ ] Duración de cookie del refresh token igual a `REFRESH_TOKEN_LIFETIME`
+- [x] Duración de cookie del refresh token igual a `REFRESH_TOKEN_LIFETIME`
 - [x] Rate limiting activo en `/auth/login/`
 - [ ] `DEFAULT_PERMISSION_CLASSES` configurado en DRF
-- [ ] CORS configurado con el dominio real del frontend
+- [x] CORS configurado con el dominio real del frontend
 - [ ] `CELERY_BROKER_URL` con credenciales reales (no `guest:guest`)
 - [ ] `djoser` usando `users.permissions.IsAdminUser`
 - [x] Auditoría de IDOR en vistas de Proveedor completada
