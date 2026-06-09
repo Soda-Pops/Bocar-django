@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, JSONParser
+
+from users.permissions import IsIndustrializacionUser
 from django.conf import settings
 
 from RFQ_Mold.models import RFQ_Mold, RFQ_Mold_EditRequest
@@ -63,9 +65,9 @@ class RFQCrearView(APIView):
     Crea un nuevo RFQ del tipo indicado.
     Acepta archivos opcionales bajo el key 'archivos' (multipart/form-data).
     El campo created_by se asigna automáticamente.
-    Requiere autenticación.
+    Requiere role='Ind'.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsIndustrializacionUser]
     parser_classes     = [MultiPartParser, JSONParser]
 
     @extend_schema(
@@ -124,9 +126,9 @@ class RFQEditarView(APIView):
     Edita un RFQ existente. Solo permitido mientras el status sea En_Ind.
     Si el RFQ ya está en En_Com o En_Pro la edición es rechazada.
     Para desbloquearlo debe tramitarse una solicitud de edición aprobada.
-    Requiere autenticación.
+    Requiere role='Ind'. Solo el creador puede editar, salvo is_admin=True.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsIndustrializacionUser]
     parser_classes     = [MultiPartParser, JSONParser]
 
     @extend_schema(
@@ -171,6 +173,12 @@ class RFQEditarView(APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
+            if rfq.created_by != request.user and not request.user.is_admin:
+                return Response(
+                    {'detail': 'No tienes permiso para editar este RFQ.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             if rfq.status != RFQ_Mold.Status.INDUSTRIALIZACION:
                 return Response(
                     {'detail': 'El RFQ ya fue enviado y no puede editarse directamente. '
@@ -200,6 +208,12 @@ class RFQEditarView(APIView):
                 return Response(
                     {'detail': 'RFQ Trimming no encontrado.'},
                     status=status.HTTP_404_NOT_FOUND,
+                )
+
+            if rfq.created_by != request.user and not request.user.is_admin:
+                return Response(
+                    {'detail': 'No tienes permiso para editar este RFQ.'},
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             if rfq.status != RFQ_Trimming.Status.INDUSTRIALIZACION:
@@ -239,9 +253,9 @@ class RFQEnviarAComercializacionView(APIView):
     POST /api_industrializacion/v1/rfq/<id>/enviar/?tipo=mold|trimming
     Cambia el status del RFQ de En_Ind a En_Com.
     Solo se permite si el RFQ está actualmente en En_Ind.
-    Requiere autenticación.
+    Requiere role='Ind'. Solo el creador puede enviar, salvo is_admin=True.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsIndustrializacionUser]
 
     @extend_schema(
         summary="Enviar RFQ a Comercialización",
@@ -282,6 +296,12 @@ class RFQEnviarAComercializacionView(APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
+            if rfq.created_by != request.user and not request.user.is_admin:
+                return Response(
+                    {'detail': 'No tienes permiso para enviar este RFQ.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             if rfq.status != RFQ_Mold.Status.INDUSTRIALIZACION:
                 return Response(
                     {'detail': 'El RFQ solo puede enviarse a Comercialización desde el status En_Ind.'},
@@ -304,6 +324,12 @@ class RFQEnviarAComercializacionView(APIView):
                 return Response(
                     {'detail': 'RFQ Trimming no encontrado.'},
                     status=status.HTTP_404_NOT_FOUND,
+                )
+
+            if rfq.created_by != request.user and not request.user.is_admin:
+                return Response(
+                    {'detail': 'No tienes permiso para enviar este RFQ.'},
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             if rfq.status != RFQ_Trimming.Status.INDUSTRIALIZACION:
@@ -348,9 +374,9 @@ class RFQSolicitarEdicionView(APIView):
     POST /api_industrializacion/v1/edit-requests/?tipo=mold|trimming
     Crea una solicitud para regresar el RFQ de En_Com a En_Ind.
     Solo válido si el RFQ está en En_Com y no hay otra solicitud Pendiente.
-    Requiere autenticación.
+    Requiere role='Ind'.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsIndustrializacionUser]
 
     @extend_schema(
         summary="Solicitar edición de RFQ (En_Com → En_Ind)",
@@ -413,10 +439,10 @@ class RFQListIndustrializacionView(APIView):
     GET /api_industrializacion/v1/rfqs/
     Lista todos los RFQs (mold y trimming) con la siguiente regla de visibilidad:
       - Borradores (En_Ind): solo los creados por el usuario autenticado.
-      - En_Com, En_Pro, complete: todos los usuarios.
-    Requiere autenticación.
+      - En_Com, En_Pro, complete: todos los usuarios del área.
+    Requiere role='Ind'.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsIndustrializacionUser]
 
     @extend_schema(
         summary="Listado de RFQs (Industrialización)",

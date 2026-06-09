@@ -74,6 +74,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'users.authentication.CookieJWTAuthentication',
     ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.ScopedRateThrottle',
     ],
@@ -162,6 +165,27 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# ---------------------------------------------------------------------------
+# Base de datos — Microsoft SQL Server (producción)
+# Requiere: pip install mssql-django pyodbc
+# y Microsoft ODBC Driver for SQL Server 18 instalado en el sistema.
+# Para activar: comentar el bloque SQLite de arriba y descomentar este.
+# ---------------------------------------------------------------------------
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'mssql',
+#         'NAME':     os.environ.get('DB_NAME', 'bocar_db'),
+#         'HOST':     os.environ.get('DB_HOST', 'localhost'),
+#         'PORT':     os.environ.get('DB_PORT', '1433'),
+#         'USER':     os.environ.get('DB_USER', ''),
+#         'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+#         'OPTIONS': {
+#             'driver':            os.environ.get('DB_DRIVER', 'ODBC Driver 18 for SQL Server'),
+#             'TrustServerCertificate': os.environ.get('DB_TRUST_SERVER_CERT', 'yes'),
+#         },
+#     }
+# }
 
 
 # Password validation

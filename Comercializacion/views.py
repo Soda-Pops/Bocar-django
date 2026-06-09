@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework import serializers, status
 from users.permissions import IsComercializacionUser, IsComercializacionAdmin
 from RFQ_Mold.models import RFQ_Mold, RFQ_Mold_EditRequest
+from Prov_RFQ_Mold.models import Cost_Breakdown_Mold
+from Prov_RFQ_Trimming.models import Cost_Breakdown_Trimming
 from RFQ_Mold.serializers import MoldEditRequestApproveSerializer, MoldEditRequestListSerializer
 from RFQ_Trimming.models import RFQ_Trimming, RFQ_Trimming_EditRequest
 from RFQ_Trimming.serializers import TrimmingEditRequestApproveSerializer, TrimmingEditRequestListSerializer
@@ -266,15 +268,15 @@ class EditRequestAprobarView(APIView):
     PATCH /api_comercializacion/v1/edit-requests/<id>/aprobar/?tipo=mold|trimming
     Aprueba una solicitud de edición pendiente.
     Regresa el RFQ a En_Ind para que Industrialización pueda editarlo.
-    Requiere is_admin=True y role=Com.
+    Requiere role=Com.
     """
-    permission_classes = [IsComercializacionAdmin]
+    permission_classes = [IsComercializacionUser]
 
     @extend_schema(
         summary="Aprobar solicitud de edición",
         description="""
             Aprueba una solicitud de edición pendiente. El RFQ vuelve a En_Ind.
-            Requiere is_admin=True y role='Com'.
+            Requiere role='Com'.
             No requiere cuerpo en el request.
         """,
         parameters=[_TIPO_PARAM],
@@ -347,16 +349,16 @@ class EditRequestRechazarView(APIView):
     PATCH /api_comercializacion/v1/edit-requests/<id>/rechazar/?tipo=mold|trimming
     Rechaza una solicitud de edición pendiente.
     El RFQ permanece en su status actual (En_Com).
-    Requiere is_admin=True y role=Com.
+    Requiere role=Com.
     """
-    permission_classes = [IsComercializacionAdmin]
+    permission_classes = [IsComercializacionUser]
 
     @extend_schema(
         summary="Rechazar solicitud de edición",
         description="""
             Rechaza una solicitud de edición pendiente. El RFQ permanece en En_Com.
             Se registra el motivo del rechazo, el revisor y el timestamp.
-            Requiere is_admin=True y role='Com'.
+            Requiere role='Com'.
             No requiere cuerpo en el request.
         """,
         parameters=[_TIPO_PARAM],
@@ -568,3 +570,102 @@ class ExtensionTiempoResolverView(APIView):
             {'detail': f'Solicitud de extensión {accion} correctamente.'},
             status=status.HTTP_200_OK,
         )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMPARATIVA DE PRECIOS POR PROVEEDOR
+# ─────────────────────────────────────────────────────────────────────────────
+
+_PRECIO_CAMPOS = (
+    'accs_grand_total_sum',
+    'mat_grand_total_sum',
+    'grand_total_sum',
+    'corr_grand_total_sum',
+    'log_grand_total_sum',
+)
+
+
+class ComparativaProveedoresView(APIView):
+    """
+    GET /api_comercializacion/v1/rfq/<rfq_id>/comparativa/?tipo=mold|trimming
+    Devuelve la lista de proveedores que ya respondieron al RFQ con su desglose
+    de precios y el precio total calculado.
+    Requiere role='Com'.
+    """
+    permission_classes = [IsComercializacionUser]
+
+    @extend_schema(
+        summary="Comparativa de precios por proveedor",
+        description="""
+            Devuelve todos los proveedores que ya enviaron su cotización (`is_answered=True`)
+            para el RFQ indicado. Por cada uno incluye el desglose de cinco totales y
+            el `precio_total` calculado como su suma.
+            Requiere `role='Com'`.
+        """,
+        parameters=[_TIPO_PARAM],
+        responses={
+            200: inline_serializer(
+                name='ComparativaProveedorItem',
+                many=True,
+                fields={
+                    'usuario_id':            serializers.IntegerField(),
+                    'nombre_empresa':        serializers.CharField(),
+                    'accs_grand_total_sum':  serializers.FloatField(),
+                    'mat_grand_total_sum':   serializers.FloatField(),
+                    'grand_total_sum':       serializers.FloatField(),
+                    'corr_grand_total_sum':  serializers.FloatField(),
+                    'log_grand_total_sum':   serializers.FloatField(),
+                    'precio_total':          serializers.FloatField(),
+                },
+            ),
+            400: inline_serializer(
+                name='ComparativaBadRequest',
+                fields={'detail': serializers.CharField()},
+            ),
+            404: inline_serializer(
+                name='ComparativaNotFound',
+                fields={'detail': serializers.CharField()},
+            ),
+        },
+    )
+    def get(self, request, rfq_id):
+        tipo = request.query_params.get('tipo', '').lower()
+        if tipo not in ('mold', 'trimming'):
+            return _tipo_invalido()
+
+        if tipo == 'mold':
+            if not RFQ_Mold.objects.filter(pk=rfq_id, logical_delete=False).exists():
+                return Response({'detail': 'RFQ no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+            asignaciones = (
+                Asignacion_Proveedor_Mold.objects
+                .filter(id_RFQ_Mold=rfq_id, is_answered=True, logical_delete=False)
+                .select_related('id_Proveedor__id_account', 'cost_breakdown')
+            )
+        else:
+            if not RFQ_Trimming.objects.filter(pk=rfq_id, logical_delete=False).exists():
+                return Response({'detail': 'RFQ no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+            asignaciones = (
+                Asignacion_Proveedor_Trimming.objects
+                .filter(id_RFQ_Trimming=rfq_id, is_answered=True, logical_delete=False)
+                .select_related('id_Proveedor__id_account', 'cost_breakdown')
+            )
+
+        resultado = []
+        for asignacion in asignaciones:
+            try:
+                cb = asignacion.cost_breakdown
+            except (Cost_Breakdown_Mold.DoesNotExist, Cost_Breakdown_Trimming.DoesNotExist):
+                continue
+
+            proveedor = asignacion.id_Proveedor
+            usuario   = proveedor.id_account
+
+            totales = {campo: getattr(cb, campo, 0.0) for campo in _PRECIO_CAMPOS}
+            resultado.append({
+                'usuario_id':           usuario.id,
+                'nombre_empresa':       proveedor.company_name,
+                **totales,
+                'precio_total':         sum(totales.values()),
+            })
+
+        return Response(resultado, status=status.HTTP_200_OK)

@@ -42,13 +42,34 @@ class IsProveedor(BasePermission):
     Usado en: consulta de asignaciones propias del proveedor.
     """
     message = "Acceso denegado: se requiere ser un proveedor registrado."
- 
+
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated and
             request.user.role == 'Pro'
         )
 
+
+class IsIndustrializacionUser(BasePermission):
+
+    message = "Acceso denegado: se requiere ser del área de Industrialización."
+
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            request.user.role == 'Ind'
+        )
+
+
+class IsIndustrializacionAdmin(BasePermission):
+
+    message = "Acceso denegado: se requiere ser administrador del área de Industrialización."
+
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            request.user.is_admin and
+            request.user.role == 'Ind'
 class IsSistemas(BasePermission):
     """
     Solo usuarios con role='IT'.

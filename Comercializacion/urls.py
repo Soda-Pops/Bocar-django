@@ -6,6 +6,7 @@ from .views import (
     EditRequestRechazarView,
     SolicitudesPendientesView,
     ExtensionTiempoResolverView,
+    ComparativaProveedoresView,
 )
 
 urlpatterns = [
@@ -30,4 +31,8 @@ urlpatterns = [
     # PATCH — resuelve solicitud de extensión de tiempo de un proveedor
     # Query param requerido: ?tipo=mold|trimming
     path('extension/<int:pk>/resolver/', ExtensionTiempoResolverView.as_view(), name='comercializacion-extension-resolver'),
+
+    # GET — comparativa de precios de proveedores que ya respondieron un RFQ
+    # Query param requerido: ?tipo=mold|trimming
+    path('rfq/<int:rfq_id>/comparativa/', ComparativaProveedoresView.as_view(), name='comercializacion-comparativa-proveedores'),
 ]
