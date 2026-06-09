@@ -21,6 +21,13 @@ def _emails_por_rol(rol):
     return list(CustomUser.objects.filter(role=rol).values_list('email', flat=True))
 
 
+def _emails_asignados(rfq):
+    return list(
+        rfq.asignaciones.filter(logical_delete=False)
+        .values_list('id_Proveedor__contact_email', flat=True)
+    )
+
+
 def _emails_admins():
     return list(CustomUser.objects.filter(is_admin=True).values_list('email', flat=True))
 
@@ -63,10 +70,10 @@ def notificar_comercializacion(rfq):
 
 
 def notificar_proveedores(rfq):
-    """RFQ avanza a En_Pro — notifica a todos los Proveedores (BCC)."""
-    emails = _emails_por_rol(ROL_PROVEEDOR)
+    """RFQ avanza a En_Pro — notifica solo a los proveedores asignados a este RFQ (BCC)."""
+    emails = _emails_asignados(rfq)
     if not emails:
-        logger.warning('notificar_proveedores: no hay usuarios con rol Proveedor.')
+        logger.warning('notificar_proveedores: RFQ #%s no tiene asignaciones activas.', rfq.id)
         return
     _enviar(
         subject  = f'[BOCAR] Solicitud de Cotización — RFQ #{rfq.id}',

@@ -31,6 +31,8 @@ from django.conf import settings
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION
 
+from django.db import transaction
+
 from historial.models import RFQHistorial
 from historial.services import registrar_historial
 
@@ -160,98 +162,101 @@ class CrearAsignacionesView(APIView):
         proveedores = serializer.validated_data['proveedores']
         paso_a_pro  = False
 
-        # Verificar que el RFQ existe
-        if tipo == 'mold':
-            try:
-                rfq = RFQ_Mold.objects.get(id=id_rfq, logical_delete=False)
-            except RFQ_Mold.DoesNotExist:
-                return Response(
-                    {'detail': 'RFQ Mold no encontrado.'},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            for id_proveedor in proveedores:
+        with transaction.atomic():
+            # Verificar que el RFQ existe
+            if tipo == 'mold':
                 try:
-                    proveedor = Proveedor.objects.get(id=id_proveedor)
-                except Proveedor.DoesNotExist:
-                    continue  # proveedor inválido, se omite
+                    rfq = RFQ_Mold.objects.select_for_update().get(id=id_rfq, logical_delete=False)
+                except RFQ_Mold.DoesNotExist:
+                    return Response(
+                        {'detail': 'RFQ Mold no encontrado.'},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
 
-                # Si ya existe asignación activa para este par rfq+proveedor, omitir
-                ya_existe = Asignacion_Proveedor_Mold.objects.filter(
-                    id_RFQ_Mold=rfq,
-                    id_Proveedor=proveedor,
-                    logical_delete=False,
-                ).exists()
+                for id_proveedor in proveedores:
+                    try:
+                        proveedor = Proveedor.objects.get(id=id_proveedor)
+                    except Proveedor.DoesNotExist:
+                        continue  # proveedor inválido, se omite
 
-                if not ya_existe:
-                    Asignacion_Proveedor_Mold.objects.create(
+                    # Si ya existe asignación activa para este par rfq+proveedor, omitir
+                    ya_existe = Asignacion_Proveedor_Mold.objects.filter(
                         id_RFQ_Mold=rfq,
                         id_Proveedor=proveedor,
-                        id_user_comercializacion=request.user,
-                        due_date=due_date,
+                        logical_delete=False,
+                    ).exists()
+
+                    if not ya_existe:
+                        Asignacion_Proveedor_Mold.objects.create(
+                            id_RFQ_Mold=rfq,
+                            id_Proveedor=proveedor,
+                            id_user_comercializacion=request.user,
+                            due_date=due_date,
+                        )
+
+                # Mover el RFQ a En_Pro si aún no lo está
+                if rfq.status != RFQ_Mold.Status.PROVEEDOR:
+                    rfq.status = RFQ_Mold.Status.PROVEEDOR
+                    rfq.save(update_fields=['status'])
+                    paso_a_pro = True
+
+            else:
+                try:
+                    rfq = RFQ_Trimming.objects.select_for_update().get(id=id_rfq, logical_delete=False)
+                except RFQ_Trimming.DoesNotExist:
+                    return Response(
+                        {'detail': 'RFQ Trimming no encontrado.'},
+                        status=status.HTTP_404_NOT_FOUND,
                     )
 
-            # Mover el RFQ a En_Pro si aún no lo está
-            if rfq.status != RFQ_Mold.Status.PROVEEDOR:
-                rfq.status = RFQ_Mold.Status.PROVEEDOR
-                rfq.save(update_fields=['status'])
-                paso_a_pro = True
+                for id_proveedor in proveedores:
+                    try:
+                        proveedor = Proveedor.objects.get(id=id_proveedor)
+                    except Proveedor.DoesNotExist:
+                        continue
 
-        else:
-            try:
-                rfq = RFQ_Trimming.objects.get(id=id_rfq, logical_delete=False)
-            except RFQ_Trimming.DoesNotExist:
-                return Response(
-                    {'detail': 'RFQ Trimming no encontrado.'},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            for id_proveedor in proveedores:
-                try:
-                    proveedor = Proveedor.objects.get(id=id_proveedor)
-                except Proveedor.DoesNotExist:
-                    continue
-
-                ya_existe = Asignacion_Proveedor_Trimming.objects.filter(
-                    id_RFQ_Trimming=rfq,
-                    id_Proveedor=proveedor,
-                    logical_delete=False,
-                ).exists()
-
-                if not ya_existe:
-                    Asignacion_Proveedor_Trimming.objects.create(
+                    ya_existe = Asignacion_Proveedor_Trimming.objects.filter(
                         id_RFQ_Trimming=rfq,
                         id_Proveedor=proveedor,
-                        id_user_comercializacion=request.user,
-                        due_date=due_date,
-                    )
+                        logical_delete=False,
+                    ).exists()
 
-            # Mover el RFQ a En_Pro si aún no lo está
-            if rfq.status != RFQ_Trimming.Status.PROVEEDOR:
-                rfq.status = RFQ_Trimming.Status.PROVEEDOR
-                rfq.save(update_fields=['status'])
-                paso_a_pro = True
+                    if not ya_existe:
+                        Asignacion_Proveedor_Trimming.objects.create(
+                            id_RFQ_Trimming=rfq,
+                            id_Proveedor=proveedor,
+                            id_user_comercializacion=request.user,
+                            due_date=due_date,
+                        )
 
-        # Historial: envío a proveedores (solo en la transición) + asignación
-        if paso_a_pro:
+                # Mover el RFQ a En_Pro si aún no lo está
+                if rfq.status != RFQ_Trimming.Status.PROVEEDOR:
+                    rfq.status = RFQ_Trimming.Status.PROVEEDOR
+                    rfq.save(update_fields=['status'])
+                    paso_a_pro = True
+
+            # Historial: envío a proveedores (solo en la transición) + asignación
+            if paso_a_pro:
+                registrar_historial(
+                    rfq_tipo        = tipo,
+                    rfq_id          = rfq.id,
+                    evento          = RFQHistorial.Evento.ENVIO_PROVEEDORES,
+                    actor           = request.user,
+                    status_anterior = 'En_Com',
+                    status_nuevo    = 'En_Pro',
+                )
             registrar_historial(
-                rfq_tipo        = tipo,
-                rfq_id          = rfq.id,
-                evento          = RFQHistorial.Evento.ENVIO_PROVEEDORES,
-                actor           = request.user,
-                status_anterior = 'En_Com',
-                status_nuevo    = 'En_Pro',
+                rfq_tipo = tipo,
+                rfq_id   = rfq.id,
+                evento   = RFQHistorial.Evento.ASIGNACION_PROVEEDORES,
+                actor    = request.user,
+                detalle  = {'proveedores': proveedores, 'due_date': str(due_date)},
             )
-        registrar_historial(
-            rfq_tipo = tipo,
-            rfq_id   = rfq.id,
-            evento   = RFQHistorial.Evento.ASIGNACION_PROVEEDORES,
-            actor    = request.user,
-            detalle  = {'proveedores': proveedores, 'due_date': str(due_date)},
-        )
 
-        if settings.NOTIFICATIONS_ENABLED:
-            notif_tasks.notificar_proveedores.delay(rfq.id, tipo)
+            if settings.NOTIFICATIONS_ENABLED:
+                transaction.on_commit(
+                    lambda: notif_tasks.notificar_proveedores.delay(rfq.id, tipo)
+                )
 
         return Response(
             {'detail': 'Asignaciones procesadas correctamente.'},
@@ -311,12 +316,14 @@ class EditRequestAprobarView(APIView):
                 edit_request, data=request.data, partial=True, context={'request': request}
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-
-            if settings.NOTIFICATIONS_ENABLED:
-                notif_tasks.notificar_modificacion_rfq.delay(
-                    edit_request.rfq_mold.id, 'mold', request.user.id, [ROL_INDUSTRIALIZACION]
-                )
+            with transaction.atomic():
+                serializer.save()
+                if settings.NOTIFICATIONS_ENABLED:
+                    transaction.on_commit(
+                        lambda: notif_tasks.notificar_modificacion_rfq.delay(
+                            edit_request.rfq_mold.id, 'mold', request.user.id, [ROL_INDUSTRIALIZACION]
+                        )
+                    )
         else:
             try:
                 edit_request = RFQ_Trimming_EditRequest.objects.get(pk=pk)
@@ -327,12 +334,14 @@ class EditRequestAprobarView(APIView):
                 edit_request, data=request.data, partial=True, context={'request': request}
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-
-            if settings.NOTIFICATIONS_ENABLED:
-                notif_tasks.notificar_modificacion_rfq.delay(
-                    edit_request.rfq_trimming.id, 'trimming', request.user.id, [ROL_INDUSTRIALIZACION]
-                )
+            with transaction.atomic():
+                serializer.save()
+                if settings.NOTIFICATIONS_ENABLED:
+                    transaction.on_commit(
+                        lambda: notif_tasks.notificar_modificacion_rfq.delay(
+                            edit_request.rfq_trimming.id, 'trimming', request.user.id, [ROL_INDUSTRIALIZACION]
+                        )
+                    )
 
         return Response(
             {'detail': 'Solicitud de edición aprobada. El RFQ ha vuelto a En_Ind.'},
