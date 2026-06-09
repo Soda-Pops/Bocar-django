@@ -118,18 +118,4 @@ Cubre (19 tests, sin broker requerido):
   - `Comercializacion` crear asignaciones → `notificar_proveedores`
   - `Asignaciones` enviar respuesta → `notificar_cotizacion_recibida`
 
----
 
-## **Evaluación de Proveedores**
-
-Compras califica la entrega de cada proveedor por asignación. El score se acumula en `Proveedor.rating` como promedio histórico.
-
-→ Documentación completa: [docs/evaluacion_proveedores.md](docs/evaluacion_proveedores.md)
-
----
-
-## **Historial / Auditoría de RFQs**
-
-La app `historial/` registra todos los eventos del ciclo de vida de cada RFQ con diff de campos, actor y timestamp.
-
-→ Documentación completa: [docs/historial.md](docs/historial.md)
