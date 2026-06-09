@@ -8,6 +8,7 @@ class CustomUser(AbstractUser):
         INDUSTRIALIZACION = 'Ind', 'Industrialización'
         COMERCIALIZACION = 'Com', 'Comercialización'
         PROVEEDOR = 'Pro', 'Proveedor'
+        SISTEMAS = 'IT', 'Sistemas'
 
     # Añade los atributos que requieras
     email = models.EmailField(_("email address"), unique=True)

@@ -31,8 +31,14 @@ urlpatterns = [
     # Industrialización ----------------------------------------------
     path('api_industrializacion/v1/', include('Industrializacion.urls')),
 
+    # Módulo IA ------------------------------------------------------
+    path('modulo-ia/', include('modulo_IA.urls')),
+
     # Historial / auditoría de RFQs -----------------------------------
     path('api_historial/v1/', include('historial.urls')),
+
+    # Evaluaciones de proveedores ------------------------------------
+    path('api_evaluaciones/v1/', include('Evaluaciones.urls')),
 
     # Chatbot ---------------------------------------------------------
     path('api_chatbot/v1/', include('chatbot.urls')),

@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'Prov_RFQ_Trimming',
     'Comercializacion',
     'Industrializacion',
+    'modulo_IA',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
@@ -65,6 +66,7 @@ INSTALLED_APPS = [
     'notificaciones',
     'historial',
     'chatbot',
+    'Evaluaciones',
 ]
 
 REST_FRAMEWORK = {
