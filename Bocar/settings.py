@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'notificaciones',
     'historial',
     'chatbot',
+    'Evaluaciones',
 ]
 
 REST_FRAMEWORK = {
