@@ -9,8 +9,11 @@ from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
+from Asignaciones.models import Asignacion_Proveedor_Mold, Asignacion_Proveedor_Trimming
+
 from .models import RFQHistorial
-from .serializers import RFQHistorialSerializer
+from .serializers import RFQHistorialSerializer, RFQHistorialPublicoSerializer
+from .services import get_rfq_object
 
 
 class HistorialPagination(PageNumberPagination):
@@ -19,11 +22,30 @@ class HistorialPagination(PageNumberPagination):
     max_page_size        = 100
 
 
+# Eventos que un proveedor puede ver: solo los que le conciernen directamente.
+_EVENTOS_PUBLICOS_PRO = frozenset({
+    RFQHistorial.Evento.ENVIO_PROVEEDORES,
+    RFQHistorial.Evento.ASIGNACION_PROVEEDORES,
+    RFQHistorial.Evento.COTIZACION_RECIBIDA,
+    RFQHistorial.Evento.CANCELACION,
+    RFQHistorial.Evento.EXTENSION_SOLICITADA,
+    RFQHistorial.Evento.EXTENSION_APROBADA,
+    RFQHistorial.Evento.EXTENSION_RECHAZADA,
+})
+
+
 class RFQHistorialView(APIView):
     """
     GET /api_historial/v1/<tipo>/<rfq_id>/
     Devuelve el historial de eventos de una RFQ (mold o trimming),
     ordenado del más reciente al más antiguo.
+
+    Política de visibilidad:
+      - Ind (no admin): solo RFQs creados por el propio usuario.
+      - Ind (is_admin): todos los RFQs.
+      - Com: todos los RFQs.
+      - Pro: solo RFQs donde tiene asignación activa; eventos internos ocultados.
+      - SinRol: 403.
 
     Filtros opcionales (query params):
       - evento=<EVENTO>   uno o varios (repetir el parámetro) — filtra por tipo de evento.
@@ -33,11 +55,9 @@ class RFQHistorialView(APIView):
 
     Paginado: page (1 por defecto) y page_size (20 por defecto, máx. 100).
     La respuesta es {count, next, previous, results}.
-
-    Requiere autenticación.
     """
     permission_classes = [IsAuthenticated]
-    pagination_class    = HistorialPagination
+    pagination_class   = HistorialPagination
 
     @extend_schema(
         summary="Historial de una RFQ",
@@ -67,7 +87,76 @@ class RFQHistorialView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        user = request.user
+        role = user.role
+
+        # ── Control de acceso por rol ─────────────────────────────────────────
+        if role == 'SinRol':
+            return Response(
+                {'detail': 'No tienes permiso para ver el historial de RFQs.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if role == 'Ind':
+            if not user.is_admin:
+                rfq = get_rfq_object(tipo, rfq_id)
+                if rfq is None:
+                    return Response(
+                        {'detail': 'RFQ no encontrado.'},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                if rfq.created_by != user:
+                    return Response(
+                        {'detail': 'No tienes permiso para ver el historial de este RFQ.'},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+            else:
+                if get_rfq_object(tipo, rfq_id) is None:
+                    return Response(
+                        {'detail': 'RFQ no encontrado.'},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+        elif role == 'Com':
+            if get_rfq_object(tipo, rfq_id) is None:
+                return Response(
+                    {'detail': 'RFQ no encontrado.'},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        elif role == 'Pro':
+            try:
+                proveedor = user.proveedor
+            except Exception:
+                return Response(
+                    {'detail': 'No tienes un perfil de proveedor activo.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if tipo == RFQHistorial.Tipo.MOLD:
+                tiene_asignacion = Asignacion_Proveedor_Mold.objects.filter(
+                    id_RFQ_Mold=rfq_id,
+                    id_Proveedor=proveedor,
+                    logical_delete=False,
+                ).exists()
+            else:
+                tiene_asignacion = Asignacion_Proveedor_Trimming.objects.filter(
+                    id_RFQ_Trimming=rfq_id,
+                    id_Proveedor=proveedor,
+                    logical_delete=False,
+                ).exists()
+
+            if not tiene_asignacion:
+                return Response(
+                    {'detail': 'No tienes permiso para ver el historial de este RFQ.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        # ── Consulta base ─────────────────────────────────────────────────────
         eventos = RFQHistorial.objects.filter(rfq_tipo=tipo, rfq_id=rfq_id)
+
+        # Proveedores solo ven eventos públicos
+        if role == 'Pro':
+            eventos = eventos.filter(evento__in=_EVENTOS_PUBLICOS_PRO)
 
         # ── Filtro por tipo de evento (uno o varios) ──
         eventos_filtro = request.query_params.getlist('evento')
@@ -91,7 +180,7 @@ class RFQHistorialView(APIView):
                 )
             eventos = eventos.filter(actor_id=int(actor))
 
-        # ── Filtro por rango de fechas (sobre la fecha del timestamp) ──
+        # ── Filtro por rango de fechas ──
         desde = request.query_params.get('desde')
         if desde:
             fecha = _parse_fecha(desde)
@@ -106,12 +195,13 @@ class RFQHistorialView(APIView):
                 return _fecha_invalida('hasta')
             eventos = eventos.filter(timestamp__date__lte=fecha)
 
-        # Orden estable para la paginación (timestamps iguales → desempata por id)
         eventos = eventos.order_by('-timestamp', '-id')
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(eventos, request, view=self)
-        serializer = RFQHistorialSerializer(page, many=True)
+
+        serializer_class = RFQHistorialPublicoSerializer if role == 'Pro' else RFQHistorialSerializer
+        serializer = serializer_class(page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
 

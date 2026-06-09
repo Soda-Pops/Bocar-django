@@ -23,7 +23,7 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = RFQ_Trimming
         fields = '__all__'
-        read_only_fields = ['created_by', 'created_date']
+        read_only_fields = ['created_by', 'created_date', 'status', 'complete', 'logical_delete']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,15 +34,6 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
             write_only=True,
             required=False
         )
-
-    def validate_status(self, value):
-        # En_Pro está bloqueado en creación — el status Proveedor
-        # solo se asigna mediante el flujo de aprobación, no directamente
-        if value == RFQ_Trimming.Status.PROVEEDOR:
-            raise serializers.ValidationError(
-                "No se puede crear un RFQ directamente en status 'En Proveedor'."
-            )
-        return value
 
     def create(self, validated_data):
         # Extraemos archivos antes del INSERT — si no mandaron, lista vacía

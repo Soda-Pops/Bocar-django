@@ -1,6 +1,8 @@
 import logging
 
 from .models import RFQHistorial
+from RFQ_Mold.models import RFQ_Mold
+from RFQ_Trimming.models import RFQ_Trimming
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,13 @@ def registrar_historial(*, rfq_tipo, rfq_id, evento, actor=None,
             evento, rfq_tipo, rfq_id,
         )
         return None
+
+
+def get_rfq_object(tipo, rfq_id):
+    """Devuelve el objeto RFQ (Mold o Trimming) o None si no existe."""
+    if tipo == RFQHistorial.Tipo.MOLD:
+        return RFQ_Mold.objects.filter(pk=rfq_id, logical_delete=False).first()
+    return RFQ_Trimming.objects.filter(pk=rfq_id, logical_delete=False).first()
 
 
 def diff_campos(instance, validated_data, excluir=('archivos',)):
