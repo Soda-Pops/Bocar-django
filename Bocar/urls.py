@@ -37,6 +37,9 @@ urlpatterns = [
     # Historial / auditoría de RFQs -----------------------------------
     path('api_historial/v1/', include('historial.urls')),
 
+    # Evaluaciones de proveedores ------------------------------------
+    path('api_evaluaciones/v1/', include('Evaluaciones.urls')),
+
     # Chatbot ---------------------------------------------------------
     path('api_chatbot/v1/', include('chatbot.urls')),
 
