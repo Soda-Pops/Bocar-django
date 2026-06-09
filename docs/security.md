@@ -1,6 +1,6 @@
 # Seguridad — problemas pendientes
 
-> Última actualización: 2026-06-08. Solo se listan issues sin resolver.
+> Última actualización: 2026-06-09. Solo se listan issues sin resolver.
 
 ---
 
@@ -10,11 +10,11 @@
 |----|-----------|---------|
 | A | ✅ Resuelto | Mass assignment en serializers RFQ |
 | B | ✅ Resuelto | Historial de RFQ visible a cualquier usuario autenticado |
-| C | 🟠 Alto | Archivos subidos sin validación de tipo, tamaño ni cantidad |
-| D | 🟠 Alto | Notificaciones enviadas a todos los proveedores, no solo los asignados |
-| E | 🟡 Medio | Cambios de rol no se reflejan hasta que expira el token (hasta 10 h) |
-| F | 🟡 Medio | Cookie del refresh token dura 24 h, pero el JWT expira en 10 h |
-| G | 🟡 Medio | Operaciones de negocio sin transacción atómica |
+| C | ✅ Resuelto | Archivos subidos sin validación de tipo, tamaño ni cantidad |
+| D | ✅ Resuelto | Notificaciones enviadas a todos los proveedores, no solo los asignados |
+| E | ✅ Resuelto | Cambios de rol no se reflejan hasta que expira el token (hasta 10 h) |
+| F | ✅ Resuelto | Cookie del refresh token dura 24 h, pero el JWT expira en 10 h |
+| G | ✅ Resuelto | Operaciones de negocio sin transacción atómica |
 | H | 🟡 Medio | Race condition: asignaciones duplicadas sin constraint de DB |
 | I | 🟡 Medio | Sin lock de dependencias Python (builds no reproducibles) |
 | J | 🟡 Medio | Falta CSRF explícito en endpoints mutantes con cookies |
@@ -72,7 +72,7 @@ Eventos visibles para `Pro`: `ENVIO_PROVEEDORES`, `ASIGNACION_PROVEEDORES`, `COT
 
 ---
 
-### C — Archivos subidos sin validación de tipo, tamaño ni cantidad
+### C — ✅ Archivos subidos sin validación de tipo, tamaño ni cantidad — RESUELTO
 
 **OWASP:** A02 Security Misconfiguration, A05 Unsafe File Handling
 
@@ -81,105 +81,114 @@ archivo, número de archivos ni escaneo de contenido. Los archivos se almacenan 
 `media/Files/RFQ_Mold/` y `media/Files/RFQ_Trimming/`, en rutas directamente
 accesibles si el servidor web expone `/media/`.
 
-**Para resolverlo:** validar extensión permitida (ej. pdf, xlsx, dwg), tipo MIME
-real (leer los primeros bytes, no confiar en la extensión), tamaño máximo por archivo
-y por RFQ. Descargar los archivos únicamente a través de un endpoint autenticado y
-autorizado, sin exponer la ruta directa. Configurar `DATA_UPLOAD_MAX_MEMORY_SIZE` y
-`FILE_UPLOAD_MAX_MEMORY_SIZE` en settings.
+**Corrección aplicada (2026-06-09):**
 
-**Archivos a revisar:**
-- `RFQ_Mold/models.py` (línea 151)
-- `RFQ_Trimming/models.py` (línea 117)
-- `RFQ_Mold/serializers.py` (línea 27)
-- `RFQ_Trimming/serializers.py` (línea 33)
-- `Industrializacion/views.py` (líneas 109, 187, 218)
-- `Bocar/settings.py` — agregar `DATA_UPLOAD_MAX_MEMORY_SIZE`
+Validación completa implementada en `General_RFQs/utils.py` y aplicada en los tres
+puntos de recepción de archivos de `Industrializacion/views.py`. La respuesta de
+error es `400 Bad Request` con un dict detallando exactamente qué falló.
+
+**Validaciones aplicadas:**
+
+| Validación | Detalle |
+|---|---|
+| Extensión | Whitelist: `.pdf`, `.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx`, `.stp` |
+| MIME real | Se leen los primeros 8 bytes (magic bytes) y se verifica que correspondan a la extensión declarada. Detecta archivos renombrados. |
+| Tamaño | Máximo `MAX_UPLOAD_SIZE_MB` MB por archivo (default 10 MB, configurable por env var) |
+| Cantidad | Máximo `MAX_FILES_PER_REQUEST` archivos por request (default 10, configurable por env var) |
+
+**Archivos modificados:**
+- `General_RFQs/utils.py` — función `validar_archivos` con las 4 validaciones
+- `Industrializacion/views.py` — validación aplicada en `RFQCrearView.post` y en ambas ramas de `RFQEditarView.patch` (mold y trimming)
+- `Bocar/settings.py` — `MAX_UPLOAD_SIZE_MB`, `MAX_FILES_PER_REQUEST`, `DATA_UPLOAD_MAX_MEMORY_SIZE`, `FILE_UPLOAD_MAX_MEMORY_SIZE`
 
 ---
 
-### D — Notificaciones enviadas a todos los proveedores, no solo los asignados
+### D — ✅ Notificaciones enviadas a todos los proveedores, no solo los asignados — RESUELTO
 
 **OWASP:** A01 Broken Access Control, A04 Data Exposure
 
-Cuando un RFQ avanza al área de Proveedores, `notificar_proveedores` obtiene todos
-los usuarios con `role='Pro'` y les envía correo, ignorando la lista de asignaciones
-ya creadas para ese RFQ. Proveedores no invitados reciben información o metadata de
-RFQs que no les pertenecen.
+Cuando un RFQ avanzaba al área de Proveedores, `notificar_proveedores` obtenía todos
+los usuarios con `role='Pro'` y les enviaba correo, ignorando la lista de asignaciones
+ya creadas para ese RFQ. Proveedores no invitados recibían información de RFQs que no
+les pertenecían.
 
-**Para resolverlo:** construir la lista de destinatarios desde
-`rfq.asignaciones.filter(logical_delete=False)` en lugar de consultar por rol global.
+**Corrección aplicada (2026-06-09):**
 
-**Archivos a revisar:**
-- `notificaciones/services.py` (líneas 65, 67)
-- `Comercializacion/views.py` (línea 258)
-
----
-
-### E — Cambios de rol no se reflejan hasta que expira el token
-
-**OWASP:** A07 Authentication Failures
-
-El rol y `is_admin` del usuario quedan almacenados como claims dentro del JWT al
-hacer login. Si el rol cambia en la base de datos, el token sigue llevando el rol
-anterior durante toda su vida útil (hasta 10 horas). El cambio no tiene efecto hasta
-que el usuario vuelve a hacer login.
-
-**Opciones para resolverlo:**
-- **Más segura:** leer el rol directamente de la base de datos en cada request en
-  lugar de leerlo del token. Costo: una query extra por petición.
-- **Balance:** reducir `REFRESH_TOKEN_LIFETIME` de 10 h a 1–2 h para acotar la
-  ventana de inconsistencia.
-- **Casos críticos:** al cambiar el rol desde el admin, añadir todos los tokens
-  activos del usuario a la blacklist.
-
-**Archivos a revisar:**
-- `users/serializers.py` — `CustomTokenObtainPairSerializer`
-- `users/authentication.py` — donde se lee el rol del token por request
-
----
-
-### F — Cookie del refresh token dura 24 h, el JWT expira en 10 h
-
-**OWASP:** A07 Authentication Failures
-
-`REFRESH_TOKEN_LIFETIME` es 10 horas en `settings.py`, pero la cookie que contiene
-ese token se configura con `max_age = 24 * 60 * 60` (24 horas) en `LoginView`.
-Pasadas las 10 horas, la cookie sigue en el navegador pero el token que contiene ya
-es inválido, generando errores 401 inesperados sin redirigir al login.
-
-**Para resolverlo:** derivar `max_age` directamente del setting para que siempre
-estén sincronizados:
+Agregado helper `_emails_asignados(rfq)` en `services.py` que obtiene los correos
+directamente desde las asignaciones activas del RFQ:
 
 ```python
-refresh_lifetime = settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()
-response.set_cookie(..., max_age=int(refresh_lifetime))
+rfq.asignaciones.filter(logical_delete=False)
+    .values_list('id_Proveedor__contact_email', flat=True)
 ```
 
-**Archivos a revisar:**
-- `users/views.py` — `LoginView` (líneas ~117, ~238)
-- `Bocar/settings.py` — `SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']`
+`notificar_proveedores` ahora usa ese helper en lugar de consultar por rol global.
+La firma de la función no cambió — `tasks.py` y `views.py` no requirieron modificación.
+
+**Archivos modificados:**
+- `notificaciones/services.py` — nuevo helper `_emails_asignados`, actualizado `notificar_proveedores`
 
 ---
 
-### G — Operaciones de negocio sin transacción atómica
+### E — ✅ Cambios de rol no se reflejan hasta que expira el token — RESUELTO
+
+**OWASP:** A07 Authentication Failures
+
+**Corrección verificada (2026-06-09):**
+
+El problema no existe en la implementación actual. `CookieJWTAuthentication` extiende
+`JWTAuthentication` de SimpleJWT y llama a `self.get_user(validated_token)` en cada
+request, que ejecuta `User.objects.get(pk=user_id)` directo a la base de datos.
+Todos los permisos (`IsComercializacionUser`, `IsProveedor`, `IsIndustrializacionUser`,
+etc.) leen `request.user.role` y `request.user.is_admin` del objeto ORM, no de los
+claims del token. Un cambio de rol en la DB se refleja en el siguiente request.
+
+Los claims `role` e `is_admin` que `CustomTokenObtainPairSerializer` inyecta en el
+JWT son escritos al momento del login pero nunca leídos de vuelta por el backend —
+son dead weight (posiblemente útiles para el frontend, pero sin impacto de seguridad).
+
+**Archivos revisados:**
+- `users/authentication.py` — `CookieJWTAuthentication.authenticate()` usa `get_user()` → DB
+- `users/permissions.py` — todos los permisos leen `request.user.role` del ORM
+- `users/serializers.py` — `CustomTokenObtainPairSerializer` solo escribe claims, nunca los lee
+
+---
+
+### F — ✅ Cookie del refresh token dura 24 h, el JWT expira en 10 h — RESUELTO
+
+**OWASP:** A07 Authentication Failures
+
+Verificado el 2026-06-09: en ambos puntos donde se setea la cookie del refresh token
+(`LoginView` y el endpoint de refresh), el `max_age` se deriva directamente de
+`settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()`. Cookie y token
+están sincronizados — el fix sugerido ya estaba aplicado en el código actual.
+
+---
+
+### G — ✅ Operaciones de negocio sin transacción atómica — RESUELTO
 
 **OWASP:** A08 Integrity Failures
 
-Las transiciones de estado de un RFQ implican varios pasos: actualizar el estado del
-objeto, crear asignaciones, registrar historial y enviar notificaciones. Estas
-operaciones ocurren en pasos separados sin `transaction.atomic`. Si cualquier paso
-falla a mitad del proceso, el sistema puede quedar en estado inconsistente: un RFQ
-marcado como `En_Pro` sin asignaciones creadas, o asignaciones sin historial.
+**Corrección aplicada (2026-06-09):**
 
-**Para resolverlo:** envolver cada transición de negocio completa en
-`transaction.atomic`. Usar `select_for_update` sobre el RFQ y las asignaciones en
-operaciones concurrentes. Mover las notificaciones al callback
-`transaction.on_commit` para que solo se envíen si la transacción completa fue exitosa.
+Cada transición de negocio quedó envuelta en `transaction.atomic()`. Las notificaciones
+Celery se movieron a `transaction.on_commit()` para garantizar que solo se encolen si
+la transacción commitea exitosamente. El fetch del RFQ en `AsignarProveedoresView`
+usa `select_for_update()` para bloquear la fila durante la transacción.
 
-**Archivos a revisar:**
-- `Comercializacion/views.py` (líneas 164–258)
-- `Industrializacion/views.py` (líneas 284–343)
-- `historial/services.py` (líneas 8, 32)
+| Flujo | Vista | Cambio |
+|---|---|---|
+| Ind → Com | `Industrializacion/views.py` `RFQEnviarView` | `rfq.save()` + `registrar_historial()` + notif en `atomic` + `on_commit` |
+| Com → Pro | `Comercializacion/views.py` `AsignarProveedoresView` | loop de creates + `rfq.save()` + historial + notif en `atomic` + `on_commit` + `select_for_update()` |
+| Aprobar edición | `Comercializacion/views.py` `EditRequestAprobarView` | `serializer.save()` + notif en `atomic` + `on_commit` |
+
+`historial/services.py` no se modificó — el `try/except` defensivo es intencional:
+un fallo de historial no debe revertir la operación de negocio, y dentro del bloque
+`atomic` esa excepción es capturada internamente sin propagar.
+
+**Archivos modificados:**
+- `Industrializacion/views.py` — `RFQEnviarView.post`
+- `Comercializacion/views.py` — `AsignarProveedoresView.post`, `EditRequestAprobarView.patch`
 
 ---
 
@@ -345,7 +354,7 @@ para que solo lleguen a los proveedores asignados.
 Envolver las transiciones de negocio en `transaction.atomic` (G) y agregar el
 `UniqueConstraint` de asignaciones (H). Estas dos cosas juntas son las que más daño
 silencioso pueden causar ante carga concurrente. Después sincronizar la duración de
-la cookie con el token JWT (F) y decidir la estrategia para los cambios de rol (E).
+la cookie con el token JWT (F).
 
 **Semana 3 — endurecimiento y operaciones**
 

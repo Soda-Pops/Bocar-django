@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, JSONParser
 
 from users.permissions import IsIndustrializacionUser
+from General_RFQs.utils import validar_archivos
 from django.conf import settings
 
 from RFQ_Mold.models import RFQ_Mold, RFQ_Mold_EditRequest
@@ -24,6 +25,8 @@ from RFQ_Trimming.serializers import (
 
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_COMERCIALIZACION
+
+from django.db import transaction
 
 from historial.models import RFQHistorial
 from historial.services import registrar_historial, diff_campos
@@ -105,7 +108,13 @@ class RFQCrearView(APIView):
         else:
             SerializerClass = RFQTrimmingCreateSerializer
 
-        archivos   = request.FILES.getlist('archivos')
+        archivos = request.FILES.getlist('archivos')
+        errores  = validar_archivos(archivos)
+        if errores:
+            return Response(
+                {'detail': 'Los archivos adjuntos no son válidos.', **errores},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         serializer = SerializerClass(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(created_by=request.user, archivos=archivos)
@@ -186,7 +195,13 @@ class RFQEditarView(APIView):
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
-            archivos   = request.FILES.getlist('archivos')
+            archivos = request.FILES.getlist('archivos')
+            errores  = validar_archivos(archivos)
+            if errores:
+                return Response(
+                    {'detail': 'Los archivos adjuntos no son válidos.', **errores},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             serializer = RFQMoldCreateSerializer(rfq, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             cambios = diff_campos(rfq, serializer.validated_data)
@@ -223,7 +238,13 @@ class RFQEditarView(APIView):
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
-            archivos   = request.FILES.getlist('archivos')
+            archivos = request.FILES.getlist('archivos')
+            errores  = validar_archivos(archivos)
+            if errores:
+                return Response(
+                    {'detail': 'Los archivos adjuntos no son válidos.', **errores},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             serializer = RFQTrimmingCreateSerializer(rfq, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             cambios = diff_campos(rfq, serializer.validated_data)
@@ -314,9 +335,6 @@ class RFQEnviarAComercializacionView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            rfq.status = RFQ_Mold.Status.COMERCIALIZACION
-            rfq.save(update_fields=['status'])
-
         else:
             try:
                 rfq = RFQ_Trimming.objects.get(pk=pk, logical_delete=False)
@@ -344,20 +362,24 @@ class RFQEnviarAComercializacionView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            rfq.status = RFQ_Trimming.Status.COMERCIALIZACION
+        with transaction.atomic():
+            if tipo == 'mold':
+                rfq.status = RFQ_Mold.Status.COMERCIALIZACION
+            else:
+                rfq.status = RFQ_Trimming.Status.COMERCIALIZACION
             rfq.save(update_fields=['status'])
-
-        registrar_historial(
-            rfq_tipo        = tipo,
-            rfq_id          = rfq.id,
-            evento          = RFQHistorial.Evento.ENVIO_COMERCIALIZACION,
-            actor           = request.user,
-            status_anterior = 'En_Ind',
-            status_nuevo    = 'En_Com',
-        )
-
-        if settings.NOTIFICATIONS_ENABLED:
-            notif_tasks.notificar_comercializacion.delay(rfq.id, tipo)
+            registrar_historial(
+                rfq_tipo        = tipo,
+                rfq_id          = rfq.id,
+                evento          = RFQHistorial.Evento.ENVIO_COMERCIALIZACION,
+                actor           = request.user,
+                status_anterior = 'En_Ind',
+                status_nuevo    = 'En_Com',
+            )
+            if settings.NOTIFICATIONS_ENABLED:
+                transaction.on_commit(
+                    lambda: notif_tasks.notificar_comercializacion.delay(rfq.id, tipo)
+                )
 
         return Response(
             {'detail': f'RFQ {tipo.capitalize()} enviado a Comercialización correctamente.'},
