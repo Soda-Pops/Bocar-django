@@ -24,11 +24,18 @@ class RFQMoldCreateSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['DESC'].required = True
+        self.fields['DESC'].allow_blank = False
         self.fields['archivos'] = serializers.ListField(
             child=serializers.FileField(),
             write_only=True,
             required=False
         )
+
+    def validate_DESC(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError('El campo DESC es obligatorio.')
+        return value.strip()
 
     def create(self, validated_data):
         archivos = validated_data.pop('archivos', [])
@@ -119,6 +126,7 @@ class RFQMoldListSerializer(serializers.ModelSerializer):
             'status',
             'created_by', 
             'created_by_name',
+            'DESC',
             'created_date', 
             'due_date',
             'complete', 

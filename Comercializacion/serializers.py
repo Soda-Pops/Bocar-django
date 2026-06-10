@@ -77,6 +77,7 @@ class RFQMoldComercializacionSerializer(serializers.ModelSerializer):
         model  = RFQ_Mold
         fields = [
             'id',
+            'DESC',
             'nombre_pieza',
             'status',
             'complete',
@@ -117,6 +118,7 @@ class RFQTrimmingComercializacionSerializer(serializers.ModelSerializer):
         model  = RFQ_Trimming
         fields = [
             'id',
+            'DESC',
             'nombre_pieza',
             'status',
             'complete',
