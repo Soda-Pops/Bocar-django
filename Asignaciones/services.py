@@ -48,11 +48,7 @@ def close_rfq_if_all_assignments_answered(rfq):
     if active_assignments.filter(is_answered=False).exists():
         return False
 
-    if rfq.complete:
-        return False
-
-    rfq.complete = True
-    rfq.save(update_fields=['complete'])
+    # Solo cierra asignaciones individuales; el RFQ se cierra manualmente
     active_assignments.update(is_closed=True)
     return True
 

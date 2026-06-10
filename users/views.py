@@ -2,7 +2,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, serializers as drf_serializers
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -19,6 +19,8 @@ class LoginView(APIView):
     Recibe email y password, devuelve los tokens en cookies HttpOnly
     El body de respuesta NO incluye los tokens — van solo en las cookies
     """
+    permission_classes = [AllowAny]
+    throttle_scope = 'login'
 
     @extend_schema(
         tags=['Autenticación'],
@@ -189,6 +191,7 @@ class RefreshTokenView(APIView):
     Lee el refresh token de la cookie, genera un nuevo access token
     y lo devuelve en una nueva cookie
     """
+    permission_classes = [AllowAny]
 
     @extend_schema(
         tags=['Autenticación'],

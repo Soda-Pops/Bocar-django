@@ -90,7 +90,10 @@ class RFQCrearView(APIView):
         responses={
             201: inline_serializer(
                 name='RFQCrearResponse',
-                fields={'detail': serializers.CharField()}
+                fields={
+                    'detail': serializers.CharField(),
+                    'id': serializers.IntegerField(),
+                }
             ),
             400: inline_serializer(
                 name='RFQCrearBadRequest',
@@ -117,10 +120,13 @@ class RFQCrearView(APIView):
             )
         serializer = SerializerClass(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(created_by=request.user, archivos=archivos)
+        rfq = serializer.save(created_by=request.user, archivos=archivos)
 
         return Response(
-            {'detail': f'RFQ {tipo.capitalize()} creado correctamente.'},
+            {
+                'detail': f'RFQ {tipo.capitalize()} creado correctamente.',
+                'id': rfq.id,
+            },
             status=status.HTTP_201_CREATED,
         )
 

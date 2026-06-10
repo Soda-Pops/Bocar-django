@@ -79,6 +79,7 @@ class RFQMoldComercializacionSerializer(serializers.ModelSerializer):
             'id',
             'nombre_pieza',
             'status',
+            'complete',
             'tipo',
             'deadline',
             'fecha_creacion',
@@ -118,6 +119,7 @@ class RFQTrimmingComercializacionSerializer(serializers.ModelSerializer):
             'id',
             'nombre_pieza',
             'status',
+            'complete',
             'tipo',
             'deadline',
             'fecha_creacion',
@@ -129,6 +131,10 @@ class RFQTrimmingComercializacionSerializer(serializers.ModelSerializer):
 # ─────────────────────────────────────────────────────────────────────────────
 # CREAR ASIGNACIONES
 # ─────────────────────────────────────────────────────────────────────────────
+
+class CerrarRFQSerializer(serializers.Serializer):
+    closure_reason = serializers.CharField(max_length=1000)
+
 
 class CrearAsignacionesSerializer(serializers.Serializer):
     id_rfq      = serializers.IntegerField()

@@ -15,7 +15,6 @@ from pathlib import Path
 from datetime import timedelta
 
 from dotenv import load_dotenv
-from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -264,12 +263,6 @@ CELERY_ACCEPT_CONTENT    = ['json']
 CELERY_TASK_SERIALIZER   = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE          = TIME_ZONE
-CELERY_BEAT_SCHEDULE = {
-    'cerrar-asignaciones-vencidas-cada-hora': {
-        'task': 'Asignaciones.tasks.cerrar_asignaciones_vencidas',
-        'schedule': crontab(minute=0),
-    },
-}
 
 
 

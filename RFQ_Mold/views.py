@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, JSONParser
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count
 from django.conf import settings
 
@@ -53,8 +54,8 @@ class RFQMoldListCreateView(generics.ListAPIView):
     description=(
         'Devuelve todos los campos del RFQ Mold por ID, incluyendo archivos adjuntos '
         'y el nombre del creador (`created_by_name`).\n\n'
-        'También devuelve registros con `logical_delete=True` para consulta de historial.\n\n'
-        'Requiere autenticación.'
+        'Industrialización puede consultar RFQs activos. Comercialización solo puede '
+        'consultar RFQs activos en `En_Com` o `En_Pro`.'
     ),
     responses={
         200: RFQMoldDetailSerializer,
@@ -68,14 +69,25 @@ class RFQMoldDetailView(generics.RetrieveAPIView):
     """
     GET /rfq-molds/<id>/
     Devuelve todos los campos del RFQ Mold incluyendo archivos adjuntos y nombre del creador.
-    Endpoint deprecado — solo registros activos. Para historial usar /api_historial/v1/.
-    Requiere role='Ind'.
+    Industrialización ve RFQs activos. Comercialización solo ve RFQs activos en En_Com o En_Pro.
     """
-    permission_classes = [IsIndustrializacionUser]
+    permission_classes = [IsAuthenticated]
     serializer_class   = RFQMoldDetailSerializer
 
     def get_queryset(self):
-        return RFQ_Mold.objects.filter(logical_delete=False)
+        queryset = RFQ_Mold.objects.filter(logical_delete=False)
+        role = getattr(self.request.user, 'role', None)
+
+        if role == 'Ind':
+            return queryset
+        if role == 'Com':
+            return queryset.filter(
+                status__in=[
+                    RFQ_Mold.Status.COMERCIALIZACION,
+                    RFQ_Mold.Status.PROVEEDOR,
+                ]
+            )
+        return queryset.none()
 
 
 class RFQMoldLogicalDeleteView(UpdateAPIView):

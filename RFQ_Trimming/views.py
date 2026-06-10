@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, JSONParser
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count
 
 from .models import RFQ_Trimming, RFQ_Trimming_EditRequest
@@ -51,8 +52,8 @@ class RFQTrimmingListCreateView(generics.ListAPIView):
     description=(
         'Devuelve todos los campos del RFQ Trimming por ID, incluyendo archivos adjuntos '
         'y el nombre del creador (`created_by_name`).\n\n'
-        'También devuelve registros con `logical_delete=True` para consulta de historial.\n\n'
-        'Requiere autenticación.'
+        'Industrialización puede consultar RFQs activos. Comercialización solo puede '
+        'consultar RFQs activos en `En_Com` o `En_Pro`.'
     ),
     responses={
         200: RFQTrimmingDetailSerializer,
@@ -66,14 +67,25 @@ class RFQTrimmingDetailView(generics.RetrieveAPIView):
     """
     GET /rfq-trimmings/<id>/
     Devuelve todos los campos del RFQ Trimming incluyendo archivos adjuntos y nombre del creador.
-    Endpoint deprecado — solo registros activos. Para historial usar /api_historial/v1/.
-    Requiere role='Ind'.
+    Industrialización ve RFQs activos. Comercialización solo ve RFQs activos en En_Com o En_Pro.
     """
-    permission_classes = [IsIndustrializacionUser]
+    permission_classes = [IsAuthenticated]
     serializer_class   = RFQTrimmingDetailSerializer
 
     def get_queryset(self):
-        return RFQ_Trimming.objects.filter(logical_delete=False)
+        queryset = RFQ_Trimming.objects.filter(logical_delete=False)
+        role = getattr(self.request.user, 'role', None)
+
+        if role == 'Ind':
+            return queryset
+        if role == 'Com':
+            return queryset.filter(
+                status__in=[
+                    RFQ_Trimming.Status.COMERCIALIZACION,
+                    RFQ_Trimming.Status.PROVEEDOR,
+                ]
+            )
+        return queryset.none()
 
 
 class RFQTrimmingLogicalDeleteView(UpdateAPIView):

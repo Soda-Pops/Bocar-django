@@ -5,6 +5,7 @@ from rest_framework import serializers as drf_serializers
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.conf import settings
+from django.db.models import Count, Q
 
 from RFQ_Mold.models import RFQ_Mold
 from RFQ_Trimming.models import RFQ_Trimming
@@ -32,6 +33,8 @@ class RFQGlobalCountView(APIView):
             '- **en_comercializacion**: RFQs con `status=En_Com`.\n'
             '- **borradores**: RFQs con `status=En_Ind` del usuario indicado '
             '(por defecto el usuario autenticado).\n'
+            '- **estatus**: contadores operativos de Compras para PENDING, QUOTING, '
+            'BENCHMARK_READY, CLOSED y EXPIRED.\n'
             '- **histograma**: total de RFQs creados por mes del año en curso.\n\n'
             'Solo incluye registros con `logical_delete=False`.'
         ),
@@ -93,6 +96,26 @@ class RFQGlobalCountView(APIView):
                             'December':  drf_serializers.IntegerField(),
                         },
                     ),
+                    'estatus': inline_serializer(
+                        name='RFQOperationalStatusCount',
+                        fields={
+                            status_name: inline_serializer(
+                                name=f'{status_name}Count',
+                                fields={
+                                    'molds':     drf_serializers.IntegerField(),
+                                    'trimmings': drf_serializers.IntegerField(),
+                                    'total':     drf_serializers.IntegerField(),
+                                },
+                            )
+                            for status_name in [
+                                'PENDING',
+                                'QUOTING',
+                                'BENCHMARK_READY',
+                                'CLOSED',
+                                'EXPIRED',
+                            ]
+                        },
+                    ),
                 },
             ),
         },
@@ -125,7 +148,84 @@ class RFQGlobalCountView(APIView):
         trimmings_en_ind = trimmings.filter(status=RFQ_Trimming.Status.INDUSTRIALIZACION, created_by=user_id).count()
         total_en_ind     = molds_en_ind + trimmings_en_ind
 
-        # ─── 4. Creacion de Histograma por meses ──────────────────────────────
+        # ─── 4. Estatus operativos de Compras ────────────────────────────────
+        # PENDING: RFQs en Comercialización esperando asignación.
+        # QUOTING: RFQs en proveedor, sin cotización recibida y con asignaciones abiertas.
+        # BENCHMARK_READY: RFQs en proveedor con al menos una cotización recibida.
+        # CLOSED: RFQs cerrados formalmente por Compras.
+        # EXPIRED: RFQs en proveedor sin cotización recibida y con todas sus
+        # asignaciones activas cerradas/expiradas.
+        def contar_estatus_operativos(qs, status_comercializacion, status_proveedor):
+            proveedor_qs = qs.filter(
+                status=status_proveedor,
+                complete=False,
+            ).annotate(
+                active_assignments=Count(
+                    'asignaciones',
+                    filter=Q(asignaciones__logical_delete=False),
+                    distinct=True,
+                ),
+                answered_assignments=Count(
+                    'asignaciones',
+                    filter=Q(
+                        asignaciones__logical_delete=False,
+                        asignaciones__is_answered=True,
+                    ),
+                    distinct=True,
+                ),
+                open_assignments=Count(
+                    'asignaciones',
+                    filter=Q(
+                        asignaciones__logical_delete=False,
+                        asignaciones__is_closed=False,
+                    ),
+                    distinct=True,
+                ),
+            )
+
+            return {
+                'PENDING': qs.filter(
+                    status=status_comercializacion,
+                    complete=False,
+                ).count(),
+                'QUOTING': proveedor_qs.filter(
+                    answered_assignments=0,
+                    open_assignments__gt=0,
+                ).count(),
+                'BENCHMARK_READY': proveedor_qs.filter(
+                    answered_assignments__gt=0,
+                ).count(),
+                'CLOSED': qs.filter(
+                    complete=True,
+                    closed_by__isnull=False,
+                ).count(),
+                'EXPIRED': proveedor_qs.filter(
+                    answered_assignments=0,
+                    active_assignments__gt=0,
+                    open_assignments=0,
+                ).count(),
+            }
+
+        mold_estatus = contar_estatus_operativos(
+            molds,
+            RFQ_Mold.Status.COMERCIALIZACION,
+            RFQ_Mold.Status.PROVEEDOR,
+        )
+        trimming_estatus = contar_estatus_operativos(
+            trimmings,
+            RFQ_Trimming.Status.COMERCIALIZACION,
+            RFQ_Trimming.Status.PROVEEDOR,
+        )
+        estatus = {
+            key: {
+                'molds': mold_estatus[key],
+                'trimmings': trimming_estatus[key],
+                'total': mold_estatus[key] + trimming_estatus[key],
+            }
+            for key in ['PENDING', 'QUOTING', 'BENCHMARK_READY', 'CLOSED', 'EXPIRED']
+        }
+
+        # ─── 5. Creacion de Histograma por meses ──────────────────────────────
         meses = calendar.month_name
         hist = {}
 
@@ -158,7 +258,8 @@ class RFQGlobalCountView(APIView):
                 'trimmings': trimmings_en_ind,
                 'total':     total_en_ind,
             },
-            'histograma': hist
+            'histograma': hist,
+            'estatus': estatus,
         })
 
 

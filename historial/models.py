@@ -28,6 +28,7 @@ class RFQHistorial(models.Model):
         EXTENSION_APROBADA    = 'EXTENSION_APROBADA',    'Extensión de tiempo aprobada'
         EXTENSION_RECHAZADA   = 'EXTENSION_RECHAZADA',   'Extensión de tiempo rechazada'
         EVALUACION_PROVEEDOR  = 'EVALUACION_PROVEEDOR',  'Proveedor evaluado por Compras'
+        CIERRE_RFQ            = 'CIERRE_RFQ',            'RFQ cerrada formalmente'
 
     rfq_tipo = models.CharField(max_length=10, choices=Tipo.choices)
     rfq_id   = models.PositiveIntegerField()
