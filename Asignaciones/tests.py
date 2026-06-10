@@ -81,7 +81,7 @@ class AssignmentLifecycleServiceTests(TestCase):
         self.assertFalse(assignment.is_closed)
         self.assertEqual(assignment.due_date, date.today() + timedelta(days=5))
 
-    def test_rfq_is_completed_when_all_active_assignments_answered(self):
+    def test_all_answered_closes_assignments_not_rfq(self):
         first = self.create_assignment(is_answered=True)
         second = self.create_assignment(is_answered=True)
 
@@ -91,6 +91,6 @@ class AssignmentLifecycleServiceTests(TestCase):
         second.refresh_from_db()
 
         self.assertTrue(completed)
-        self.assertTrue(self.rfq.complete)
+        self.assertFalse(self.rfq.complete)  # cierre formal es manual
         self.assertTrue(first.is_closed)
         self.assertTrue(second.is_closed)

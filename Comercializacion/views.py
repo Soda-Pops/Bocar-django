@@ -26,7 +26,11 @@ from .serializers import (
     RFQMoldComercializacionSerializer,
     RFQTrimmingComercializacionSerializer,
     CrearAsignacionesSerializer,
+    CerrarRFQSerializer,
 )
+from datetime import date
+from django.db.models import Q
+
 from django.conf import settings
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_INDUSTRIALIZACION
@@ -87,12 +91,17 @@ class RFQListComercializacionView(APIView):
         },
     )
     def get(self, request):
+        visible_statuses = ['En_Com', 'En_Pro']
+        visible_to_comercializacion = Q(status__in=visible_statuses) | Q(complete=True)
+
         molds = RFQ_Mold.objects.filter(
-            logical_delete=False
+            visible_to_comercializacion,
+            logical_delete=False,
         ).select_related('created_by').prefetch_related('asignaciones').order_by('-created_date')
 
         trimmings = RFQ_Trimming.objects.filter(
-            logical_delete=False
+            visible_to_comercializacion,
+            logical_delete=False,
         ).select_related('created_by').prefetch_related('asignaciones').order_by('-created_date')
 
         return Response({
@@ -590,7 +599,6 @@ class ComparativaProveedoresView(APIView):
     GET /api_comercializacion/v1/rfq/<rfq_id>/comparativa/?tipo=mold|trimming
     Devuelve la lista de proveedores que ya respondieron al RFQ con su desglose
     de precios y el precio total calculado.
-    Requiere role='Com'.
     """
     permission_classes = [IsComercializacionUser]
 
@@ -658,14 +666,128 @@ class ComparativaProveedoresView(APIView):
                 continue
 
             proveedor = asignacion.id_Proveedor
-            usuario   = proveedor.id_account
+            usuario = proveedor.id_account
 
             totales = {campo: getattr(cb, campo, 0.0) for campo in _PRECIO_CAMPOS}
             resultado.append({
-                'usuario_id':           usuario.id,
-                'nombre_empresa':       proveedor.company_name,
+                'usuario_id': usuario.id,
+                'nombre_empresa': proveedor.company_name,
                 **totales,
-                'precio_total':         sum(totales.values()),
+                'precio_total': sum(totales.values()),
             })
 
         return Response(resultado, status=status.HTTP_200_OK)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CERRAR RFQ FORMALMENTE
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CerrarRFQView(APIView):
+    """
+    POST /api_comercializacion/v1/rfq/<pk>/cerrar/?tipo=mold|trimming
+    Cierra formalmente un RFQ en En_Pro registrando el motivo de cierre.
+    Requiere que todas las asignaciones activas estén cerradas o expiradas.
+    Requiere role='Com'.
+    """
+    permission_classes = [IsComercializacionUser]
+
+    @extend_schema(
+        summary="Cerrar RFQ formalmente",
+        description="""
+            Cierra un RFQ en estado En_Pro registrando el motivo. Antes de validar,
+            cierra de forma lazy las asignaciones que hayan vencido sin responder.
+            Requiere que no queden asignaciones abiertas. Requiere role='Com'.
+        """,
+        parameters=[_TIPO_PARAM],
+        request=CerrarRFQSerializer,
+        responses={
+            200: inline_serializer(
+                name='CerrarRFQResponse',
+                fields={'detail': serializers.CharField()}
+            ),
+            400: inline_serializer(
+                name='CerrarRFQBadRequest',
+                fields={'detail': serializers.CharField()}
+            ),
+            404: inline_serializer(
+                name='CerrarRFQNotFound',
+                fields={'detail': serializers.CharField()}
+            ),
+        },
+    )
+    def post(self, request, pk):
+        tipo = request.query_params.get('tipo', '').lower()
+        if tipo not in ('mold', 'trimming'):
+            return _tipo_invalido()
+
+        serializer = CerrarRFQSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        # Obtener RFQ
+        if tipo == 'mold':
+            try:
+                rfq = RFQ_Mold.objects.get(id=pk, logical_delete=False)
+            except RFQ_Mold.DoesNotExist:
+                return Response({'detail': 'RFQ no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+            status_proveedor = RFQ_Mold.Status.PROVEEDOR
+        else:
+            try:
+                rfq = RFQ_Trimming.objects.get(id=pk, logical_delete=False)
+            except RFQ_Trimming.DoesNotExist:
+                return Response({'detail': 'RFQ no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+            status_proveedor = RFQ_Trimming.Status.PROVEEDOR
+
+        # Validaciones de negocio
+        if rfq.status != status_proveedor:
+            return Response(
+                {'detail': 'El RFQ debe estar en En_Pro para cerrarlo.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if rfq.complete:
+            return Response(
+                {'detail': 'El RFQ ya está cerrado.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Cierre lazy: marcar como cerradas las asignaciones vencidas no contestadas
+        active = rfq.asignaciones.filter(logical_delete=False)
+        active.filter(
+            is_answered=False,
+            is_closed=False,
+            due_date__lt=date.today(),
+        ).update(is_closed=True)
+
+        # Validar que no queden asignaciones abiertas
+        if active.filter(is_closed=False).exists():
+            return Response(
+                {'detail': 'Todas las asignaciones deben estar cerradas o expiradas antes de cerrar el RFQ.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Aplicar cierre formal
+        rfq.complete       = True
+        rfq.closed_at      = timezone.now()
+        rfq.closed_by      = request.user
+        rfq.closure_reason = data['closure_reason']
+        rfq.save(update_fields=[
+            'complete', 'closed_at', 'closed_by', 'closure_reason',
+        ])
+
+        registrar_historial(
+            rfq_tipo        = tipo,
+            rfq_id          = rfq.id,
+            evento          = RFQHistorial.Evento.CIERRE_RFQ,
+            actor           = request.user,
+            status_anterior = 'En_Pro',
+            status_nuevo    = 'En_Pro',
+            detalle         = {
+                'motivo': data['closure_reason'],
+            },
+        )
+
+        return Response(
+            {'detail': 'RFQ cerrado formalmente.'},
+            status=status.HTTP_200_OK,
+        )

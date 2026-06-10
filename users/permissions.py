@@ -70,6 +70,9 @@ class IsIndustrializacionAdmin(BasePermission):
             request.user.is_authenticated and
             request.user.is_admin and
             request.user.role == 'Ind'
+        )
+
+
 class IsSistemas(BasePermission):
     """
     Solo usuarios con role='IT'.

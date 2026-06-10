@@ -23,6 +23,16 @@ class RFQ_Trimming(models.Model):
     complete       = models.BooleanField(default=False)
     logical_delete = models.BooleanField(default=False)
 
+    # ─── Cierre formal ────────────────────────────────────────────────────────
+    closed_at      = models.DateTimeField(null=True, blank=True)
+    closed_by      = models.ForeignKey(
+                        settings.AUTH_USER_MODEL,
+                        on_delete=models.SET_NULL,
+                        null=True, blank=True,
+                        related_name='rfq_trimmings_closed',
+                    )
+    closure_reason = models.TextField(blank=True, default='')
+
     # ─── Datos primera parte ───────────────────────────────────────────────────
     DESC = models.CharField(max_length=255, blank=True, default="")
     PPY  = models.FloatField(default=0.0)

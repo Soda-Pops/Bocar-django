@@ -73,6 +73,28 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
 # ─────────────────────────────────────────────────────────────────────────────
 class RFQTrimmingDetailSerializer(serializers.ModelSerializer):
 
+    all_assignments_closed = serializers.SerializerMethodField()
+    has_received_quote     = serializers.SerializerMethodField()
+    assigned_suppliers     = serializers.SerializerMethodField()
+
+    def get_all_assignments_closed(self, obj) -> bool:
+        active = obj.asignaciones.filter(logical_delete=False)
+        if not active.exists():
+            return False
+        return not active.filter(is_closed=False).exists()
+
+    def get_has_received_quote(self, obj) -> bool:
+        return obj.asignaciones.filter(logical_delete=False, is_answered=True).exists()
+
+    def get_assigned_suppliers(self, obj) -> list:
+        return list(
+            obj.asignaciones
+               .filter(logical_delete=False)
+               .select_related('id_Proveedor')
+               .values('id_Proveedor__id', 'id_Proveedor__company_name')
+               .distinct()
+        )
+
     class Meta:
         model = RFQ_Trimming
         fields = '__all__'
@@ -91,9 +113,13 @@ class RFQTrimmingListSerializer(serializers.ModelSerializer):
 
     created_by_name = serializers.ReadOnlyField(source='created_by.username')
     rfq_type        = serializers.SerializerMethodField()
+    has_received_quote = serializers.SerializerMethodField()
 
     def get_rfq_type(self, obj):
         return 'Trimming'   # Valor fijo — siempre será Trimming en este serializer
+
+    def get_has_received_quote(self, obj):
+        return obj.asignaciones.filter(logical_delete=False, is_answered=True).exists()
 
     class Meta:
         model = RFQ_Trimming
@@ -107,6 +133,7 @@ class RFQTrimmingListSerializer(serializers.ModelSerializer):
             'complete',
             'logical_delete',
             'rfq_type',
+            'has_received_quote',
         ]
 
 

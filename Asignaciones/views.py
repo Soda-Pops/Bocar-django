@@ -122,11 +122,16 @@ class AsignacionRFQDetalleView(APIView):
 
     @extend_schema(
         summary="Detalle de RFQ por asignación",
-        description="""
-            Devuelve la información completa del RFQ (mold o trimming) vinculado
-            a la asignación indicada. Requiere role='Pro' y que la asignación
-            pertenezca al proveedor autenticado.
-        """,
+        description=(
+            "Devuelve la información completa del RFQ (mold o trimming) vinculado "
+            "a la asignación indicada, junto con el indicador `tiene_borrador`.\n\n"
+            "`tiene_borrador` es `true` cuando el proveedor ya guardó un borrador de "
+            "cotización (`status='draft'`) pero aún no lo envió. "
+            "El frontend usa este valor para decidir si debe llamar a "
+            "`POST /responder/{id}/` (primer guardado) o `PATCH /responder/{id}/actualizar/` "
+            "(guardados subsecuentes).\n\n"
+            "Requiere `role='Pro'` y que la asignación pertenezca al proveedor autenticado."
+        ),
         parameters=[
             OpenApiParameter(
                 name='tipo',
@@ -137,7 +142,14 @@ class AsignacionRFQDetalleView(APIView):
                 description="Tipo de RFQ: 'mold' o 'trimming'",
             )
         ],
-        responses={200: None},
+        responses={
+            200: inline_serializer('AsignacionDetalleConBorradorResponse', fields={
+                'rfq':            serializers.DictField(),
+                'tiene_borrador': serializers.BooleanField(),
+            }),
+            400: inline_serializer('AsignacionDetalleBadRequest', fields={'detail': serializers.CharField()}),
+            404: inline_serializer('AsignacionDetalleNotFound',   fields={'detail': serializers.CharField()}),
+        },
     )
     def get(self, request, id_asignacion):
         tipo = request.query_params.get('tipo', '').lower()
@@ -180,7 +192,15 @@ class AsignacionRFQDetalleView(APIView):
             close_if_expired(asignacion)
             serializer = RFQTrimmingDetailSerializer(asignacion.id_RFQ_Trimming)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        tiene_borrador = (
+            hasattr(asignacion, 'cost_breakdown') and
+            asignacion.cost_breakdown.status == 'draft'
+        )
+        return Response({
+            'rfq': serializer.data,
+            'tiene_borrador': tiene_borrador,
+            'is_answered': asignacion.is_answered,
+        }, status=status.HTTP_200_OK)
 
 
 _TIPO_PARAM = OpenApiParameter(
@@ -218,17 +238,26 @@ class AsignacionResponderView(APIView):
     permission_classes = [IsProveedor]
 
     @extend_schema(
-        summary="Guardar borrador de respuesta",
-        description="""
-            Crea un borrador del cost breakdown para la asignación.
-            No marca la asignación como respondida.
-            Para enviar definitivamente usar el endpoint /enviar/.
-            Requiere role='Pro'.
-
-            El cuerpo del request varía según el parámetro `tipo`:
-            - `tipo=mold` → campos de `CostBreakdownMold` (incluye `set_of_cavities` anidado opcional).
-            - `tipo=trimming` → campos de `CostBreakdownTrimming`.
-        """,
+        summary="Guardar borrador de cotización (Save Draft — primera vez)",
+        description=(
+            "Crea el primer borrador del cost breakdown para la asignación indicada. "
+            "El campo `status` se establece automáticamente en `'draft'`; "
+            "la asignación **no** se marca como respondida (`is_answered` permanece `False`).\n\n"
+            "**Reglas de negocio:**\n"
+            "- Solo puede existir un borrador o respuesta por asignación. "
+            "Si ya existe, retorna `409 Conflict`.\n"
+            "- La asignación debe estar activa: `is_closed=False`, `due_date >= hoy` e "
+            "`is_answered=False`. Si no cumple alguna condición, retorna `403 Forbidden`.\n"
+            "- Para editar un borrador ya creado usar `PATCH /responder/{id}/actualizar/`.\n"
+            "- Para enviar definitivamente a Compras usar `POST /responder/{id}/enviar/`.\n\n"
+            "**Cuerpo del request según `tipo`:**\n"
+            "- `tipo=mold` → campos de `CostBreakdownMold`. "
+            "Acepta `set_of_cavities` como objeto anidado opcional.\n"
+            "- `tipo=trimming` → campos de `CostBreakdownTrimming`.\n\n"
+            "Los campos `id`, `id_asignacion`, `last_edited_by`, `last_change` y `status` "
+            "son excluidos del body y se asignan automáticamente por el servidor.\n\n"
+            "Requiere `role='Pro'`."
+        ),
         parameters=[_TIPO_PARAM],
         request=CostBreakdownMoldCreateSerializer,
         responses={
@@ -320,19 +349,33 @@ class AsignacionBorradorActualizarView(APIView):
     permission_classes = [IsProveedor]
 
     @extend_schema(
-        summary="Actualizar borrador",
+        summary="Actualizar borrador de cotización (Save Draft — ediciones subsecuentes)",
         description=(
-            "Actualiza campos del borrador. Solo permitido si `status='draft'`. Requiere role='Pro'.\n\n"
-            "El cuerpo del request varía según el parámetro `tipo`: "
-            "`tipo=mold` usa los campos de `CostBreakdownMold`; "
-            "`tipo=trimming` usa los campos de `CostBreakdownTrimming`."
+            "Actualiza el borrador existente de la asignación. "
+            "Solo permitido mientras el borrador esté en `status='draft'`; "
+            "retorna `403 Forbidden` si ya fue enviado (`status='submitted'`).\n\n"
+            "**Reglas de negocio:**\n"
+            "- La asignación debe seguir activa: `is_closed=False` y `due_date >= hoy`. "
+            "Si no cumple, retorna `403 Forbidden`.\n"
+            "- Si no existe borrador previo, retorna `404 Not Found` — "
+            "crear primero con `POST /responder/{id}/`.\n"
+            "- El request es parcial (`PATCH`): solo se sobreescriben los campos que se envíen.\n"
+            "- Para mold: `set_of_cavities` es opcional y anidado. Si se envía, actualiza el registro "
+            "existente o lo crea si no existía.\n\n"
+            "**Cuerpo del request según `tipo`:**\n"
+            "- `tipo=mold` → cualquier subconjunto de campos de `CostBreakdownMold`.\n"
+            "- `tipo=trimming` → cualquier subconjunto de campos de `CostBreakdownTrimming`.\n\n"
+            "Los campos `id`, `id_asignacion`, `last_edited_by`, `last_change` y `status` "
+            "son excluidos del body y se ignoran aunque se envíen.\n\n"
+            "Requiere `role='Pro'`."
         ),
         parameters=[_TIPO_PARAM],
         request=CostBreakdownMoldUpdateSerializer,
         responses={
-            200: inline_serializer('BorradorActualizadoResponse', fields={'detail': serializers.CharField()}),
+            200: inline_serializer('BorradorActualizadoResponse',  fields={'detail': serializers.CharField()}),
+            400: inline_serializer('BorradorActualizadoBadRequest', fields={'detail': serializers.CharField()}),
             403: inline_serializer('BorradorActualizadoForbidden', fields={'detail': serializers.CharField()}),
-            404: inline_serializer('BorradorActualizadoNotFound', fields={'detail': serializers.CharField()}),
+            404: inline_serializer('BorradorActualizadoNotFound',  fields={'detail': serializers.CharField()}),
         },
     )
     def patch(self, request, id_asignacion):
@@ -385,16 +428,33 @@ class AsignacionEnviarRespuestaView(APIView):
     permission_classes = [IsProveedor]
 
     @extend_schema(
-        summary="Enviar respuesta definitiva",
-        description="""
-            Cambia el borrador de status draft a submitted y marca la asignación
-            como respondida. No se puede revertir. Requiere role='Pro'.
-            No requiere cuerpo en el request.
-        """,
+        summary="Enviar cotización a Compras (Submit Quotation)",
+        description=(
+            "Envía definitivamente el borrador a Compras/Comercialización. "
+            "Cambia el `status` del cost breakdown de `'draft'` a `'submitted'` y marca "
+            "la asignación como `is_answered=True` e `is_closed=True`.\n\n"
+            "**Esta acción es irreversible.** Una vez enviada, la cotización no puede modificarse.\n\n"
+            "**Efectos secundarios (en orden):**\n"
+            "1. Marca la asignación como `is_answered=True`, `is_closed=True`.\n"
+            "2. Evalúa si todas las asignaciones activas del RFQ fueron respondidas. "
+            "Si es así, marca el RFQ como `complete=True` y retorna `rfq_completed=True` en la respuesta.\n"
+            "3. Registra el evento `COTIZACION_RECIBIDA` en el historial del RFQ.\n"
+            "4. Envía notificación a Comercialización por email (solo si `NOTIFICATIONS_ENABLED=True`).\n\n"
+            "**Reglas de negocio:**\n"
+            "- Debe existir un borrador en `status='draft'`. Sin borrador retorna `404 Not Found`.\n"
+            "- Si el borrador ya fue enviado (`status='submitted'`), retorna `409 Conflict`.\n"
+            "- La asignación debe seguir activa al momento del envío. "
+            "Si venció (`is_closed=True` o `due_date < hoy`), retorna `403 Forbidden`.\n\n"
+            "No requiere cuerpo en el request.\n\n"
+            "Requiere `role='Pro'`."
+        ),
         parameters=[_TIPO_PARAM],
         request=None,
         responses={
-            200: inline_serializer('EnviarRespuestaResponse',  fields={'detail': serializers.CharField()}),
+            200: inline_serializer('EnviarRespuestaResponse', fields={
+                'detail':        serializers.CharField(),
+                'rfq_completed': serializers.BooleanField(),
+            }),
             403: inline_serializer('EnviarRespuestaForbidden', fields={'detail': serializers.CharField()}),
             404: inline_serializer('EnviarRespuestaNotFound',  fields={'detail': serializers.CharField()}),
             409: inline_serializer('EnviarRespuestaConflict',  fields={'detail': serializers.CharField()}),
@@ -456,20 +516,10 @@ class AsignacionEnviarRespuestaView(APIView):
         if settings.NOTIFICATIONS_ENABLED:
             notif_tasks.notificar_cotizacion_recibida.delay(rfq.id, tipo, request.user.id)
 
-        rfq = asignacion.id_RFQ_Mold if tipo == 'mold' else asignacion.id_RFQ_Trimming
-
-        registrar_historial(
-            rfq_tipo = tipo,
-            rfq_id   = rfq.id,
-            evento   = RFQHistorial.Evento.COTIZACION_RECIBIDA,
-            actor    = request.user,
-            detalle  = {'proveedor': proveedor.company_name},
-        )
-
-        if settings.NOTIFICATIONS_ENABLED:
-            notif_tasks.notificar_cotizacion_recibida.delay(rfq.id, tipo, request.user.id)
-
-        return Response({'detail': 'Respuesta enviada correctamente.'}, status=status.HTTP_200_OK)
+        return Response({
+            'detail': 'Respuesta enviada correctamente.',
+            'rfq_completed': rfq_completed,
+        }, status=status.HTTP_200_OK)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

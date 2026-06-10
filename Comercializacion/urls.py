@@ -7,6 +7,7 @@ from .views import (
     SolicitudesPendientesView,
     ExtensionTiempoResolverView,
     ComparativaProveedoresView,
+    CerrarRFQView,
 )
 
 urlpatterns = [
@@ -35,4 +36,7 @@ urlpatterns = [
     # GET — comparativa de precios de proveedores que ya respondieron un RFQ
     # Query param requerido: ?tipo=mold|trimming
     path('rfq/<int:rfq_id>/comparativa/', ComparativaProveedoresView.as_view(), name='comercializacion-comparativa-proveedores'),
+    # POST — cierra formalmente un RFQ registrando proveedor y motivo
+    # Query param requerido: ?tipo=mold|trimming
+    path('rfq/<int:pk>/cerrar/', CerrarRFQView.as_view(), name='comercializacion-cerrar-rfq'),
 ]
