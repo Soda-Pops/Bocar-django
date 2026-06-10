@@ -27,6 +27,8 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['DESC'].required = True
+        self.fields['DESC'].allow_blank = False
         # Inyectamos 'archivos' manualmente porque no existe en el modelo
         # __all__ solo carga campos del modelo, los extras se agregan aquí
         self.fields['archivos'] = serializers.ListField(
@@ -34,6 +36,11 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
             write_only=True,
             required=False
         )
+
+    def validate_DESC(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError('El campo DESC es obligatorio.')
+        return value.strip()
 
     def create(self, validated_data):
         # Extraemos archivos antes del INSERT — si no mandaron, lista vacía
@@ -128,6 +135,7 @@ class RFQTrimmingListSerializer(serializers.ModelSerializer):
             'status',
             'created_by',
             'created_by_name',
+            'DESC',
             'created_date',
             'due_date',
             'complete',

@@ -7,6 +7,7 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from users.permissions import IsIndustrializacionUser
 from General_RFQs.utils import validar_archivos
 from django.conf import settings
+from django.db import transaction
 
 from RFQ_Mold.models import RFQ_Mold, RFQ_Mold_EditRequest
 from RFQ_Mold.serializers import (
@@ -25,8 +26,6 @@ from RFQ_Trimming.serializers import (
 
 from notificaciones import tasks as notif_tasks
 from notificaciones.services import ROL_COMERCIALIZACION
-
-from django.db import transaction
 
 from historial.models import RFQHistorial
 from historial.services import registrar_historial, diff_campos
@@ -47,6 +46,14 @@ def _tipo_invalido():
         {'detail': "El parámetro 'tipo' es requerido y debe ser 'mold' o 'trimming'."},
         status=status.HTTP_400_BAD_REQUEST,
     )
+
+def _desc_requerido(rfq):
+    if not getattr(rfq, 'DESC', '').strip():
+        return Response(
+            {'detail': 'El campo DESC es obligatorio antes de enviar el RFQ a Comercialización.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    return None
 
 _TIPO_PARAM = OpenApiParameter(
     name='tipo',
@@ -341,6 +348,10 @@ class RFQEnviarAComercializacionView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            desc_error = _desc_requerido(rfq)
+            if desc_error:
+                return desc_error
+
         else:
             try:
                 rfq = RFQ_Trimming.objects.get(pk=pk, logical_delete=False)
@@ -367,6 +378,10 @@ class RFQEnviarAComercializacionView(APIView):
                     {'detail': 'El RFQ debe tener al menos un archivo adjunto antes de enviarse.'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            desc_error = _desc_requerido(rfq)
+            if desc_error:
+                return desc_error
 
         with transaction.atomic():
             if tipo == 'mold':
