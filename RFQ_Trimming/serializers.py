@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
+from django.utils.timezone import localdate
 from .models import RFQ_Trimming, RFQ_Trimming_File, RFQ_Trimming_EditRequest
 
 
@@ -41,6 +42,11 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
         if not value or not value.strip():
             raise serializers.ValidationError('El campo DESC es obligatorio.')
         return value.strip()
+
+    def validate_due_date(self, value):
+        if value < localdate():
+            raise serializers.ValidationError('La fecha de entrega no puede ser anterior a hoy.')
+        return value
 
     def create(self, validated_data):
         # Extraemos archivos antes del INSERT — si no mandaron, lista vacía
