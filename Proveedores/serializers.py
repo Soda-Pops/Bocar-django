@@ -2,6 +2,21 @@ from rest_framework import serializers
 from .models import Proveedor
 
 
+class ProveedorPerfilSerializer(serializers.ModelSerializer):
+    continent_name = serializers.SerializerMethodField()
+    country_name   = serializers.SerializerMethodField()
+
+    def get_continent_name(self, obj):
+        return obj.get_continent_display()
+
+    def get_country_name(self, obj):
+        return obj.country.name if obj.country else None
+
+    class Meta:
+        model  = Proveedor
+        fields = ['company_name', 'continent_name', 'country_name', 'rating']
+
+
 class ProveedorListSerializer(serializers.ModelSerializer):
     """
     Serializer de solo lectura para listar proveedores.

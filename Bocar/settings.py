@@ -118,8 +118,14 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+]
+CORS_ALLOW_CREDENTIALS = True
+
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # Agrega los headers CORS antes de que otros middlewares puedan generar la respuesta.
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -129,11 +135,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [  # Define explicitamente que origenes del frontend pueden llamar al backend desde el navegador.
-    'http://localhost:5173',  # Permite peticiones desde Vite cuando el frontend corre en localhost.
-    'http://127.0.0.1:5173',  # Permite peticiones desde Vite cuando el frontend usa la IP local en lugar de localhost.
-]  # Cierra la lista de origenes permitidos para evitar aceptar dominios no autorizados.
-CORS_ALLOW_CREDENTIALS = True  # Permite enviar y recibir cookies HttpOnly en solicitudes cross-origin del frontend.
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
+]
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'Bocar.urls'
 
