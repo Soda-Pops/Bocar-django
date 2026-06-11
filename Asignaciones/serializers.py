@@ -193,6 +193,7 @@ class CostBreakdownTrimmingUpdateSerializer(serializers.ModelSerializer):
 # ─────────────────────────────────────────────────────────────────────────────
 
 class SolicitudExtensionMoldListSerializer(serializers.ModelSerializer):
+    rfq_id             = serializers.ReadOnlyField(source='id_asignacion.id_RFQ_Mold_id')
     proveedor_nombre   = serializers.ReadOnlyField(source='id_asignacion.id_Proveedor.company_name')
     rfq_nombre         = serializers.ReadOnlyField(source='id_asignacion.id_RFQ_Mold.PT')
     due_date_actual    = serializers.ReadOnlyField(source='id_asignacion.due_date')
@@ -200,13 +201,14 @@ class SolicitudExtensionMoldListSerializer(serializers.ModelSerializer):
     class Meta:
         model  = SolicitudExtensionMold
         fields = [
-            'id', 'rfq_nombre', 'proveedor_nombre',
+            'id', 'rfq_id', 'rfq_nombre', 'proveedor_nombre',
             'due_date_actual', 'nueva_fecha',
             'motivo', 'status', 'solicitada_at',
         ]
 
 
 class SolicitudExtensionTrimmingListSerializer(serializers.ModelSerializer):
+    rfq_id             = serializers.ReadOnlyField(source='id_asignacion.id_RFQ_Trimming_id')
     proveedor_nombre   = serializers.ReadOnlyField(source='id_asignacion.id_Proveedor.company_name')
     rfq_nombre         = serializers.ReadOnlyField(source='id_asignacion.id_RFQ_Trimming.part_name')
     due_date_actual    = serializers.ReadOnlyField(source='id_asignacion.due_date')
@@ -214,7 +216,7 @@ class SolicitudExtensionTrimmingListSerializer(serializers.ModelSerializer):
     class Meta:
         model  = SolicitudExtensionTrimming
         fields = [
-            'id', 'rfq_nombre', 'proveedor_nombre',
+            'id', 'rfq_id', 'rfq_nombre', 'proveedor_nombre',
             'due_date_actual', 'nueva_fecha',
             'motivo', 'status', 'solicitada_at',
         ]
@@ -305,18 +307,6 @@ class SolicitudExtensionMoldResolverSerializer(serializers.ModelSerializer):
         # Si se aprueba, actualizamos el due_date de la asignación
         if instance.status == ExtensionStatus.APROBADA:
             reopen_assignment_for_extension(instance.id_asignacion, instance.nueva_fecha)
-
-        from historial.models import RFQHistorial
-        from historial.services import registrar_historial
-        aprobada = instance.status == ExtensionStatus.APROBADA
-        registrar_historial(
-            rfq_tipo = RFQHistorial.Tipo.MOLD,
-            rfq_id   = instance.id_asignacion.id_RFQ_Mold_id,
-            evento   = (RFQHistorial.Evento.EXTENSION_APROBADA if aprobada
-                        else RFQHistorial.Evento.EXTENSION_RECHAZADA),
-            actor    = instance.revisada_por,
-            detalle  = {'nueva_fecha': str(instance.nueva_fecha)},
-        )
 
         from historial.models import RFQHistorial
         from historial.services import registrar_historial

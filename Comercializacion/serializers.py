@@ -48,6 +48,32 @@ def _calcular_progreso(asignaciones_qs):
     return f"{respondidos}/{total} contestados"
 
 
+def _calcular_estatus_operativo(obj):
+    """
+    Replica el criterio del dashboard de conteos para que el listado y los tabs
+    de Compras clasifiquen cada RFQ de la misma forma.
+    """
+    if obj.complete:
+        return "CLOSED"
+
+    if obj.status in ("En_Com",):
+        return "PENDING"
+
+    if obj.status == "En_Pro":
+        asignaciones = obj.asignaciones.filter(logical_delete=False)
+        total = asignaciones.count()
+        respondidas = asignaciones.filter(is_answered=True).count()
+        abiertas = asignaciones.filter(is_closed=False).count()
+
+        if respondidas > 0:
+            return "BENCHMARK_READY"
+        if total > 0 and abiertas == 0:
+            return "EXPIRED"
+        return "QUOTING"
+
+    return "PENDING"
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # MOLD
 # ─────────────────────────────────────────────────────────────────────────────
@@ -60,6 +86,7 @@ class RFQMoldComercializacionSerializer(serializers.ModelSerializer):
     fecha_creacion    = serializers.SerializerMethodField()
     creado_por        = serializers.ReadOnlyField(source='created_by.username')
     progreso_proveedores = serializers.SerializerMethodField()
+    operational_status = serializers.SerializerMethodField()
 
     def get_tipo(self, obj) -> str:
         return 'Mold'
@@ -72,6 +99,9 @@ class RFQMoldComercializacionSerializer(serializers.ModelSerializer):
 
     def get_progreso_proveedores(self, obj) -> str:
         return _calcular_progreso(obj.asignaciones)
+
+    def get_operational_status(self, obj) -> str:
+        return _calcular_estatus_operativo(obj)
 
     class Meta:
         model  = RFQ_Mold
@@ -86,6 +116,7 @@ class RFQMoldComercializacionSerializer(serializers.ModelSerializer):
             'fecha_creacion',
             'creado_por',
             'progreso_proveedores',
+            'operational_status',
         ]
 
 
@@ -101,6 +132,7 @@ class RFQTrimmingComercializacionSerializer(serializers.ModelSerializer):
     fecha_creacion    = serializers.SerializerMethodField()
     creado_por        = serializers.ReadOnlyField(source='created_by.username')
     progreso_proveedores = serializers.SerializerMethodField()
+    operational_status = serializers.SerializerMethodField()
 
     def get_tipo(self, obj) -> str:
         return 'Trimming'
@@ -113,6 +145,9 @@ class RFQTrimmingComercializacionSerializer(serializers.ModelSerializer):
 
     def get_progreso_proveedores(self, obj) -> str:
         return _calcular_progreso(obj.asignaciones)
+
+    def get_operational_status(self, obj) -> str:
+        return _calcular_estatus_operativo(obj)
 
     class Meta:
         model  = RFQ_Trimming
@@ -127,6 +162,7 @@ class RFQTrimmingComercializacionSerializer(serializers.ModelSerializer):
             'fecha_creacion',
             'creado_por',
             'progreso_proveedores',
+            'operational_status',
         ]
 
 
