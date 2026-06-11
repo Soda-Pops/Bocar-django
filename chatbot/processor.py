@@ -48,17 +48,17 @@ def process_query(user, question: str, history: list[dict]) -> dict:
         plan_text = llm.chat(system_prompt, history, question, json_mode=True)
         plan      = _extract_json(plan_text)
     except (ValueError, json.JSONDecodeError):
-        return {'answer': 'No pude interpretar tu pregunta. ¿Puedes reformularla?', 'sources': []}
+        return {'answer': "I couldn't understand your question. Could you rephrase it?", 'sources': []}
     except Exception as e:
         logger.error('LLM chat error (plan step): %s', e, exc_info=True)
-        return {'answer': 'El servicio de IA no está disponible en este momento.', 'sources': []}
+        return {'answer': 'The AI service is currently unavailable. Please try again later.', 'sources': []}
 
     action = plan.get('action')
 
     # ── Respuesta de acceso denegado (Guardrail 1 — el LLM lo detectó) ───────
     if action == 'access_denied':
         return {
-            'answer':        plan.get('reason', 'No tienes acceso a esa información.'),
+            'answer':        plan.get('reason', 'You do not have access to that information.'),
             'sources':       [],
             'access_denied': True,
         }
@@ -75,7 +75,7 @@ def process_query(user, question: str, history: list[dict]) -> dict:
         # Guardrail 2: el tool debe estar en la lista permitida para el rol
         if tool_name not in allowed_tools or tool_name not in TOOL_MAP:
             return {
-                'answer':        'No tienes acceso a esa información.',
+                'answer':        'You do not have access to that information.',
                 'sources':       [],
                 'access_denied': True,
             }
@@ -84,8 +84,9 @@ def process_query(user, question: str, history: list[dict]) -> dict:
             db_results = TOOL_MAP[tool_name](user, params)
         except PermissionError as e:
             return {'answer': str(e), 'sources': [], 'access_denied': True}
-        except Exception:
-            return {'answer': 'Ocurrió un error al consultar la base de datos.', 'sources': []}
+        except Exception as e:
+            logger.error('DB tool error (tool=%s, params=%s): %s', tool_name, params, e, exc_info=True)
+            return {'answer': 'An error occurred while querying the database. Please try again.', 'sources': []}
 
         # ── Paso 2: el LLM interpreta los resultados en lenguaje natural ──────
         interpretation_msg = (
@@ -98,8 +99,8 @@ def process_query(user, question: str, history: list[dict]) -> dict:
         try:
             answer = llm.chat(_INTERPRET_SYSTEM, history, interpretation_msg)
         except Exception:
-            answer = 'Obtuve los datos pero no pude generar una respuesta. Intenta de nuevo.'
+            answer = 'I retrieved the data but could not generate a response. Please try again.'
 
         return {'answer': answer, 'sources': [tool_name]}
 
-    return {'answer': 'No entendí tu pregunta. ¿Puedes reformularla?', 'sources': []}
+    return {'answer': "I didn't understand your question. Could you rephrase it?", 'sources': []}

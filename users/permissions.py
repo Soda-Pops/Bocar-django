@@ -38,16 +38,20 @@ class IsComercializacionUser(BasePermission):
     
 class IsProveedor(BasePermission):
     """
-    Solo usuarios con role='Pro'.
+    Solo usuarios con role='Pro' que tengan un Proveedor asociado.
     Usado en: consulta de asignaciones propias del proveedor.
     """
     message = "Acceso denegado: se requiere ser un proveedor registrado."
 
     def has_permission(self, request, view):
-        return (
-            request.user.is_authenticated and
-            request.user.role == 'Pro'
-        )
+        if not (request.user.is_authenticated and request.user.role == 'Pro'):
+            return False
+        try:
+            request.user.proveedor
+        except request.user.__class__.proveedor.RelatedObjectDoesNotExist:
+            self.message = "El usuario no tiene un perfil de proveedor asociado."
+            return False
+        return True
 
 
 class IsIndustrializacionUser(BasePermission):

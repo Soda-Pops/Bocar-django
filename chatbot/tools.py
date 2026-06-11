@@ -86,7 +86,7 @@ def historial_rfq(user, tipo: str, rfq_id: int) -> dict:
     if user.role == 'Ind':
         model = RFQ_Mold if tipo == 'mold' else RFQ_Trimming
         if not model.objects.filter(id=rfq_id, created_by=user, logical_delete=False).exists():
-            raise PermissionError('No tienes acceso al historial de ese RFQ.')
+            raise PermissionError('You do not have access to the history of that RFQ.')
 
     qs = RFQHistorial.objects.filter(rfq_tipo=tipo, rfq_id=rfq_id).order_by('-timestamp')[:20]
     results = [
@@ -210,7 +210,7 @@ def mis_asignaciones(user, tipo: str, is_answered=None) -> dict:
     try:
         proveedor = user.proveedor
     except Exception:
-        raise PermissionError('Tu cuenta no tiene un perfil de proveedor asociado.')
+        raise PermissionError('Your account does not have an associated supplier profile.')
 
     answered = _parse_bool(is_answered)
     data = {}
