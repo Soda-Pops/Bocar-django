@@ -56,10 +56,5 @@ class ChatbotQueryView(APIView):
         pregunta  = serializer.validated_data['pregunta']
         historial = serializer.validated_data.get('historial', [])
 
-        result          = process_query(request.user, pregunta, historial)
-        response_status = (
-            status.HTTP_403_FORBIDDEN
-            if result.get('access_denied')
-            else status.HTTP_200_OK
-        )
-        return Response(result, status=response_status)
+        result = process_query(request.user, pregunta, historial)
+        return Response(result, status=status.HTTP_200_OK)

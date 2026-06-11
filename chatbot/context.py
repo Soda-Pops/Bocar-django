@@ -1,11 +1,11 @@
 TOOLS_IND = {
     'contar_rfqs': {
         'descripcion': 'Cuenta los RFQs propios del usuario, opcionalmente filtrados por tipo y status.',
-        'params':      {'tipo': 'mold|trimming', 'status': '(opcional) En_Ind|En_Com|En_Pro'},
+        'params':      {'tipo': 'mold|trimming|ambos', 'status': '(opcional) En_Ind|En_Com|En_Pro'},
     },
     'listar_rfqs': {
         'descripcion': 'Lista los RFQs propios del usuario con id, descripción, status y fechas.',
-        'params':      {'tipo': 'mold|trimming', 'status': '(opcional) En_Ind|En_Com|En_Pro'},
+        'params':      {'tipo': 'mold|trimming|ambos', 'status': '(opcional) En_Ind|En_Com|En_Pro'},
     },
     'historial_rfq': {
         'descripcion': 'Muestra el historial de eventos de un RFQ propio.',
@@ -17,15 +17,15 @@ TOOLS_COM = {
     **TOOLS_IND,
     'contar_rfqs_todos': {
         'descripcion': 'Cuenta todos los RFQs del sistema (no solo los propios).',
-        'params':      {'tipo': 'mold|trimming', 'status': '(opcional) En_Ind|En_Com|En_Pro'},
+        'params':      {'tipo': 'mold|trimming|ambos', 'status': '(opcional) En_Ind|En_Com|En_Pro'},
     },
     'listar_rfqs_todos': {
         'descripcion': 'Lista todos los RFQs del sistema con creador incluido.',
-        'params':      {'tipo': 'mold|trimming', 'status': '(opcional) En_Ind|En_Com|En_Pro'},
+        'params':      {'tipo': 'mold|trimming|ambos', 'status': '(opcional) En_Ind|En_Com|En_Pro'},
     },
     'rfqs_por_status': {
         'descripcion': 'Devuelve la distribución de RFQs agrupada por status.',
-        'params':      {'tipo': 'mold|trimming'},
+        'params':      {'tipo': 'mold|trimming|ambos'},
     },
     'listar_proveedores': {
         'descripcion': 'Lista todos los proveedores registrados con empresa, país y rating.',
@@ -33,14 +33,14 @@ TOOLS_COM = {
     },
     'listar_asignaciones': {
         'descripcion': 'Lista las asignaciones de proveedores a RFQs.',
-        'params':      {'tipo': 'mold|trimming', 'is_answered': '(opcional) true|false'},
+        'params':      {'tipo': 'mold|trimming|ambos', 'is_answered': '(opcional) true|false'},
     },
 }
 
 TOOLS_PRO = {
     'mis_asignaciones': {
         'descripcion': 'Lista las asignaciones propias del proveedor autenticado.',
-        'params':      {'tipo': 'mold|trimming', 'is_answered': '(opcional) true|false'},
+        'params':      {'tipo': 'mold|trimming|ambos', 'is_answered': '(opcional) true|false'},
     },
 }
 

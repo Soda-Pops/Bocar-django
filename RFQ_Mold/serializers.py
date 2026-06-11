@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
+from django.utils.timezone import localdate
 from .models import RFQ_Mold, RFQ_Mold_File, RFQ_Mold_EditRequest
 
 
@@ -37,6 +38,11 @@ class RFQMoldCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('El campo DESC es obligatorio.')
         return value.strip()
 
+    def validate_due_date(self, value):
+        if value < localdate():
+            raise serializers.ValidationError('La fecha de entrega no puede ser anterior a hoy.')
+        return value
+
     def create(self, validated_data):
         archivos = validated_data.pop('archivos', [])
         rfq_mold = RFQ_Mold.objects.create(**validated_data)
@@ -60,8 +66,12 @@ class RFQMoldCreateSerializer(serializers.ModelSerializer):
         archivos = validated_data.pop('archivos', [])
         rfq_mold = super().update(instance, validated_data)
 
-        for archivo in archivos:
-            RFQ_Mold_File.objects.create(rfq_mold=rfq_mold, archivo=archivo)
+        if archivos:
+            for file_obj in rfq_mold.archivos.all():
+                file_obj.archivo.delete(save=False)
+                file_obj.delete()
+            for archivo in archivos:
+                RFQ_Mold_File.objects.create(rfq_mold=rfq_mold, archivo=archivo)
 
         return rfq_mold
 
