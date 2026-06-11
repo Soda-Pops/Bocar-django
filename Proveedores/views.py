@@ -1,7 +1,9 @@
 from rest_framework import generics
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from .models import Proveedor
-from .serializers import ProveedorListSerializer
-from users.permissions import IsComercializacionUser
+from .serializers import ProveedorListSerializer, ProveedorPerfilSerializer
+from users.permissions import IsComercializacionUser, IsProveedor
 
 from drf_spectacular.utils import extend_schema
 
@@ -32,3 +34,27 @@ class ProveedorListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Proveedor.objects.all()
+
+
+@extend_schema(
+    tags=['Proveedores'],
+    summary='Perfil del proveedor autenticado',
+    description=(
+        'Devuelve los datos de perfil del proveedor que tiene la sesión activa.\n\n'
+        'Campos: `company_name`, `continent_name`, `country_name`, `rating`.\n\n'
+        'Requiere `role=Pro`.'
+    ),
+    responses={200: ProveedorPerfilSerializer},
+)
+class MiPerfilView(APIView):
+    """
+    GET /api_proveedores/v1/mi-perfil/
+    Devuelve el perfil del proveedor autenticado.
+    Requiere: role=Pro.
+    """
+    permission_classes = [IsProveedor]
+
+    def get(self, request):
+        proveedor = request.user.proveedor
+        serializer = ProveedorPerfilSerializer(proveedor)
+        return Response(serializer.data)

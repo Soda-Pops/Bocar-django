@@ -50,7 +50,9 @@ def _tipo_invalido():
 MOLD_SUBMIT_REQUIRED_FIELDS = [
     'due_date', 'DESC', 'PPY', 'CUST', 'PT', 'PNUM', 'PRLF', 'TT', 'DTQ', 'ELAB',
     'SMACH', 'No_CAV', 'No_ofHS', 'No_ofMS', 'ThirdPSupp', 'No_subc', 'Jco', 'QcSys',
-    'Ihtcs', 'Spin', 'HICS', 'CMGOM', 'SPforThermoR', 'NReturnV', 'VacV', 'ChillBl',
+    'Ihtcs', 'Spin', 'HICS', 'CMGOM', 'SPforThermoR', 'NReturnV',
+    # VacV y ChillBl son mutuamente excluyentes (regla "uno u otro"): la UI bloquea
+    # el que no aplica y ambos pueden quedar en 0, por eso NO se exigen aquí.
     'No_Pl_Jco_sys', 'Oth',
     'D_3D', 'D_3D_note', 'FlAn', 'FlAn_note', 'Run_des', 'Run_des_note',
     'Run_and_over_mod', 'Run_and_over_mod_note', 'ManProp', 'ManProp_note', 'Ldi',
@@ -71,24 +73,41 @@ MOLD_SUBMIT_REQUIRED_FIELDS = [
 ]
 
 TRIMMING_SUBMIT_REQUIRED_FIELDS = [
-    'due_date', 'DESC', 'PPY', 'CUST', 'PNUM', 'PRLF',
+    # 1. RFQ
+    'due_date', 'DESC', 'PPY', 'CUST', 'PNUM', 'PRLF', 'previous_job',
+    # 2. Trim Die
     'press', 'no_of_cavities', 'no_of_hydraulic_slides', 'fully_automatic_process',
-    'presence_detectors', 'trimming_process_condition', 'admissible_residual_burr_mm',
-    'castings_supplied_by_auma', 'adjustments_optimization_at_tool', 'gas_springs',
-    'di_design_3d_model', 'di_design_3d_model_note', 'di_design_2d_data',
-    'di_design_2d_data_note', 'di_punch_pins_data', 'di_punch_pins_data_note',
+    'presence_detectors', 'trimming_process_condition', 'punch_pins_required',
+    'admissible_residual_burr_mm', 'castings_supplied_by_auma',
+    'adjustments_optimization_at_tool', 'gas_springs',
+    # 3. Data Information (toggle + nota)
+    'di_design_3d_model', 'di_design_3d_model_note',
+    'di_design_2d_data', 'di_design_2d_data_note',
+    'di_punch_pins_data', 'di_punch_pins_data_note',
     'di_manufacturing_proposals', 'di_manufacturing_proposals_note',
     'di_latest_trim_die_improvements', 'di_latest_trim_die_improvements_note',
-    'di_sketch_trim_die_concept', 'di_sketch_trim_die_concept_note', 'di_trim_die_no1',
-    'di_trim_die_no1_note', 'di_trim_die_no2', 'di_trim_die_no2_note',
+    'di_sketch_trim_die_concept', 'di_sketch_trim_die_concept_note',
+    # 4. Other Information (toggle + nota)
+    'di_trim_die_no1', 'di_trim_die_no1_note',
+    'di_trim_die_no2', 'di_trim_die_no2_note',
     'di_set_of_spare_parts', 'di_set_of_spare_parts_note',
     'di_hydraulic_cylinders_limit_sw', 'di_hydraulic_cylinders_limit_sw_note',
-    'oi_frame_refurbishment', 'oi_set_of_electric_wires', 'oi_others',
-    'oi_delivery_date_imex', 'oi_ejector_system_fixed_side',
-    'part_name', 'part_number', 'part_dim_length_mm', 'part_dim_width_mm',
-    'part_dim_height_mm', 'min_wall_thickness_mm', 'max_wall_thickness_mm',
+    'oi_frame_refurbishment', 'oi_frame_refurbishment_note',
+    'oi_set_of_electric_wires', 'oi_set_of_electric_wires_note',
+    'oi_others_applies', 'oi_others',
+    'oi_delivery_date_imex_applies',
+    # oi_delivery_date_imex is only required when oi_delivery_date_imex_applies=True (checked below)
+    'oi_ejector_fixed_applies', 'oi_ejector_fixed_note',
+    # 6. Part Geometry
+    'part_name', 'part_number', 'part_dimension',
+    'min_wall_thickness_mm', 'max_wall_thickness_mm',
     'projected_area_cm2', 'surface_cm2', 'volume_cm3', 'gross_weight_g',
-    'press_type', 'quantity_of_punch_pins', 'comments',
+    # 7. Tool Specification
+    'introduction_extraction_process', 'biscuit_position',
+    'quantity_of_punch_pins', 'temperature_when_trimmed',
+    'oi_ejector_system_fixed_side',
+    # 8. Comments
+    'comments',
 ]
 
 
@@ -116,6 +135,10 @@ def _validar_completitud(rfq, tipo):
                 missing.append(field_name)
         except Exception:
             missing.append(field_name)
+
+    if tipo == 'trimming' and getattr(rfq, 'oi_delivery_date_imex_applies', False):
+        if not getattr(rfq, 'oi_delivery_date_imex', None):
+            missing.append('oi_delivery_date_imex')
 
     if missing:
         return Response(

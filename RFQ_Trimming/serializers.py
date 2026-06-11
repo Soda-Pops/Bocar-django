@@ -38,6 +38,11 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
             required=False
         )
 
+    def validate(self, attrs):
+        if not attrs.get('oi_delivery_date_imex_applies', False):
+            attrs['oi_delivery_date_imex'] = None
+        return attrs
+
     def validate_DESC(self, value):
         if not value or not value.strip():
             raise serializers.ValidationError('El campo DESC es obligatorio.')
