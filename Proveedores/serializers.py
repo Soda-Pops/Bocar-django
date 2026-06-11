@@ -44,3 +44,22 @@ class ProveedorListSerializer(serializers.ModelSerializer):
             'continent_name',   # nombre completo (ej. 'North America')
             'rating',
         ]
+
+
+class ProveedorPerfilSerializer(serializers.ModelSerializer):
+    """
+    Serializer de solo lectura para el perfil propio del proveedor autenticado.
+    Expone company_name, continent_name, country_name y rating.
+    """
+    continent_name = serializers.SerializerMethodField()
+    country_name   = serializers.SerializerMethodField()
+
+    def get_continent_name(self, obj):
+        return obj.get_continent_display()
+
+    def get_country_name(self, obj):
+        return obj.country.name if obj.country else None
+
+    class Meta:
+        model  = Proveedor
+        fields = ['company_name', 'continent_name', 'country_name', 'rating']

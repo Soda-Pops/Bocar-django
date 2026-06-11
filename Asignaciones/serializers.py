@@ -27,6 +27,7 @@ from .services import reopen_assignment_for_extension
 
 
 class AsignacionMoldProveedorSerializer(serializers.ModelSerializer):
+    rfq_id         = serializers.ReadOnlyField(source='id_RFQ_Mold_id')
     rfq_nombre     = serializers.ReadOnlyField(source='id_RFQ_Mold.PT')
     DESC           = serializers.ReadOnlyField(source='id_RFQ_Mold.DESC')
     en_tiempo      = serializers.SerializerMethodField()
@@ -49,6 +50,7 @@ class AsignacionMoldProveedorSerializer(serializers.ModelSerializer):
         model  = Asignacion_Proveedor_Mold
         fields = [
             'id',
+            'rfq_id',
             'rfq_nombre',
             'DESC',
             'fecha_de_asignacion',
@@ -62,6 +64,7 @@ class AsignacionMoldProveedorSerializer(serializers.ModelSerializer):
 
 
 class AsignacionTrimmingProveedorSerializer(serializers.ModelSerializer):
+    rfq_id         = serializers.ReadOnlyField(source='id_RFQ_Trimming_id')
     rfq_nombre     = serializers.ReadOnlyField(source='id_RFQ_Trimming.part_name')
     DESC           = serializers.ReadOnlyField(source='id_RFQ_Trimming.DESC')
     en_tiempo      = serializers.SerializerMethodField()
@@ -84,6 +87,7 @@ class AsignacionTrimmingProveedorSerializer(serializers.ModelSerializer):
         model  = Asignacion_Proveedor_Trimming
         fields = [
             'id',
+            'rfq_id',
             'rfq_nombre',
             'DESC',
             'fecha_de_asignacion',

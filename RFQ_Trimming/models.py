@@ -44,7 +44,7 @@ class RFQ_Trimming(models.Model):
 
     # ─── DCM ───────────────────────────────────────────────────────────────────
     press                            = models.CharField(max_length=100, blank=True, default="")
-    no_of_cavities                   = models.IntegerField(null=True, blank=True)
+    no_of_cavities                   = models.CharField(max_length=100, blank=True, default="")
     no_of_hydraulic_slides           = models.CharField(max_length=100, blank=True, default="", help_text='Defined by toolmaker')
     fully_automatic_process          = models.CharField(max_length=100, blank=True, default="")
     presence_detectors               = models.CharField(max_length=100, blank=True, default="")
@@ -80,24 +80,40 @@ class RFQ_Trimming(models.Model):
     di_hydraulic_cylinders_limit_sw_note = models.CharField(max_length=250, blank=True, default="")
 
     # ─── Other Information ─────────────────────────────────────────────────────
+    # En el frontend cada item de "Other Information" es un toggle YES/NO + nota.
+    # Por eso cada uno persiste un booleano (checked) y una nota.
 
-    #estos 3 llena nota
+    # Frame Refurbishment — booleano + nota
     oi_frame_refurbishment       = models.BooleanField(default=False)
-    oi_set_of_electric_wires     = models.BooleanField(default=False)
-    oi_others                    = models.CharField(max_length=255, blank=True, default="")
-    
-    #NO LLEVA NOTA
-    oi_delivery_date_imex        = models.DateField(null=True, blank=True)
+    oi_frame_refurbishment_note  = models.CharField(max_length=250, blank=True, default="")
 
-    #este lleva nota 
+    # Set of electric wires — booleano + nota
+    oi_set_of_electric_wires       = models.BooleanField(default=False)
+    oi_set_of_electric_wires_note  = models.CharField(max_length=250, blank=True, default="")
+
+    # Others — booleano (checked) + nota (texto libre)
+    oi_others_applies            = models.BooleanField(default=False)
+    oi_others                    = models.CharField(max_length=255, blank=True, default="")
+
+    # Delivery date (IMEX) — booleano (checked) + fecha
+    oi_delivery_date_imex_applies = models.BooleanField(default=False)
+    oi_delivery_date_imex         = models.DateField(null=True, blank=True)
+
+    # Ejector system in fixed side (toggle de Other Information) — booleano + nota.
+    # OJO: oi_ejector_system_fixed_side (más abajo) guarda el texto libre del
+    # campo "Ejector system in fixed side" de la pestaña Tool Specification.
+    oi_ejector_fixed_applies     = models.BooleanField(default=False)
+    oi_ejector_fixed_note        = models.CharField(max_length=250, blank=True, default="")
+
     oi_ejector_system_fixed_side = models.CharField(max_length=100, blank=True, default="")
 
     # ─── Part Geometry ─────────────────────────────────────────────────────────
     part_name   = models.CharField(max_length=255, blank=True, default="")
     part_number = models.CharField(max_length=100, blank=True, default="")
 
+    # Dimensión de la parte en texto libre (ej. "320x180x75"), tal como la captura el frontend
+    part_dimension        = models.CharField(max_length=100, blank=True, default="")
     part_dim_length_mm    = models.FloatField(null=True, blank=True)
-    #2 campos no existian eliminados ya
     min_wall_thickness_mm = models.FloatField(null=True, blank=True)
     max_wall_thickness_mm = models.FloatField(null=True, blank=True)
     projected_area_cm2    = models.FloatField(null=True, blank=True)
