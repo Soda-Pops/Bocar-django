@@ -41,7 +41,7 @@ def _parse_bool(value) -> bool | None:
 # Ind — solo sus propios RFQs
 # ─────────────────────────────────────────────────────────────────────────────
 
-def contar_rfqs(user, tipo: str, status: str = None) -> dict:
+def contar_rfqs(user, tipo: str = 'ambos', status: str = None) -> dict:
     counts = {}
     for t, model in _rfq_models(tipo):
         qs = model.objects.filter(created_by=user, logical_delete=False)
@@ -56,7 +56,7 @@ def contar_rfqs(user, tipo: str, status: str = None) -> dict:
     return result
 
 
-def listar_rfqs(user, tipo: str, status: str = None) -> dict:
+def listar_rfqs(user, tipo: str = 'ambos', status: str = None) -> dict:
     data = {}
     for t, model in _rfq_models(tipo):
         qs = model.objects.filter(created_by=user, logical_delete=False)
@@ -107,7 +107,7 @@ def historial_rfq(user, tipo: str, rfq_id: int) -> dict:
 # Com — acceso global a todos los RFQs, asignaciones y proveedores
 # ─────────────────────────────────────────────────────────────────────────────
 
-def contar_rfqs_todos(tipo: str, status: str = None) -> dict:
+def contar_rfqs_todos(tipo: str = 'ambos', status: str = None) -> dict:
     counts = {}
     for t, model in _rfq_models(tipo):
         qs = model.objects.filter(logical_delete=False)
@@ -122,7 +122,7 @@ def contar_rfqs_todos(tipo: str, status: str = None) -> dict:
     return result
 
 
-def listar_rfqs_todos(tipo: str, status: str = None) -> dict:
+def listar_rfqs_todos(tipo: str = 'ambos', status: str = None) -> dict:
     data = {}
     for t, model in _rfq_models(tipo):
         qs = model.objects.filter(logical_delete=False)
@@ -148,7 +148,7 @@ def listar_rfqs_todos(tipo: str, status: str = None) -> dict:
     return {**data, 'tipo': 'ambos'}
 
 
-def rfqs_por_status(tipo: str) -> dict:
+def rfqs_por_status(tipo: str = 'ambos') -> dict:
     data = {}
     for t, model in _rfq_models(tipo):
         data[t] = list(
@@ -176,7 +176,7 @@ def listar_proveedores() -> dict:
     return {'proveedores': results, 'total': Proveedor.objects.count()}
 
 
-def listar_asignaciones(tipo: str, is_answered=None) -> dict:
+def listar_asignaciones(tipo: str = 'ambos', is_answered=None) -> dict:
     answered = _parse_bool(is_answered)
     data = {}
     for t, model, rfq_field in _asig_models(tipo):
@@ -206,7 +206,7 @@ def listar_asignaciones(tipo: str, is_answered=None) -> dict:
 # Pro — solo sus propias asignaciones
 # ─────────────────────────────────────────────────────────────────────────────
 
-def mis_asignaciones(user, tipo: str, is_answered=None) -> dict:
+def mis_asignaciones(user, tipo: str = 'ambos', is_answered=None) -> dict:
     try:
         proveedor = user.proveedor
     except Exception:
