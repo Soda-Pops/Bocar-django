@@ -1,12 +1,16 @@
+import json
 from datetime import date
 
 from django.conf import settings
+from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers, status
+from rest_framework.parsers import MultiPartParser, JSONParser
 from users.permissions import IsProveedor, IsComercializacionUser
 from notificaciones import tasks as notif_tasks
 
+from General_RFQs.utils import validar_archivos
 from historial.models import RFQHistorial
 from historial.services import registrar_historial
 from .models import (
@@ -15,8 +19,8 @@ from .models import (
     SolicitudExtensionMold,
     SolicitudExtensionTrimming,
 )
-from Prov_RFQ_Mold.models import Cost_Breakdown_Mold
-from Prov_RFQ_Trimming.models import Cost_Breakdown_Trimming
+from Prov_RFQ_Mold.models import Cost_Breakdown_Mold, Cost_Breakdown_Mold_File
+from Prov_RFQ_Trimming.models import Cost_Breakdown_Trimming, Cost_Breakdown_Trimming_File
 from .serializers import (
     AsignacionMoldProveedorSerializer,
     AsignacionTrimmingProveedorSerializer,
@@ -228,6 +232,48 @@ _404_asignacion = {'detail': 'Asignación no encontrada o no pertenece a este pr
 _403_vencida    = {'detail': 'El plazo de esta asignación ha vencido. Solicita una extensión de tiempo.'}
 
 
+def _quotation_payload(request):
+    data = request.data
+    if hasattr(data, 'lists'):
+        payload = {
+            key: values[-1]
+            for key, values in data.lists()
+            if key != 'archivos' and values
+        }
+    else:
+        payload = dict(data)
+        payload.pop('archivos', None)
+
+    soc = payload.get('set_of_cavities')
+    if isinstance(soc, str):
+        try:
+            payload['set_of_cavities'] = json.loads(soc)
+        except json.JSONDecodeError:
+            pass
+    return payload
+
+
+def _validate_quotation_files(request):
+    archivos = request.FILES.getlist('archivos')
+    errores = validar_archivos(archivos)
+    if errores:
+        return archivos, Response(
+            {'detail': 'Los archivos adjuntos no son válidos.', **errores},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    return archivos, None
+
+
+def _save_mold_files(breakdown, archivos):
+    for archivo in archivos:
+        Cost_Breakdown_Mold_File.objects.create(id_cost_breakdown=breakdown, archivo=archivo)
+
+
+def _save_trimming_files(breakdown, archivos):
+    for archivo in archivos:
+        Cost_Breakdown_Trimming_File.objects.create(id_cost_breakdown=breakdown, archivo=archivo)
+
+
 class AsignacionResponderView(APIView):
     """
     POST /asignaciones/responder/<id_asignacion>/?tipo=mold|trimming
@@ -236,6 +282,7 @@ class AsignacionResponderView(APIView):
     Si ya existe un borrador retorna 409.
     """
     permission_classes = [IsProveedor]
+    parser_classes = [MultiPartParser, JSONParser]
 
     @extend_schema(
         summary="Guardar borrador de cotización (Save Draft — primera vez)",
@@ -274,6 +321,10 @@ class AsignacionResponderView(APIView):
             return Response({'detail': "El parámetro 'tipo' debe ser 'mold' o 'trimming'."}, status=status.HTTP_400_BAD_REQUEST)
 
         proveedor = request.user.proveedor
+        payload = _quotation_payload(request)
+        archivos, file_error_response = _validate_quotation_files(request)
+        if file_error_response:
+            return file_error_response
 
         if tipo == 'mold':
             asignacion = _get_asignacion_mold(id_asignacion, proveedor)
@@ -284,9 +335,11 @@ class AsignacionResponderView(APIView):
                 return Response({'detail': error}, status=status.HTTP_403_FORBIDDEN)
             if hasattr(asignacion, 'cost_breakdown'):
                 return Response({'detail': 'Ya existe un borrador o respuesta para esta asignación.'}, status=status.HTTP_409_CONFLICT)
-            serializer = CostBreakdownMoldCreateSerializer(data=request.data)
+            serializer = CostBreakdownMoldCreateSerializer(data=payload)
             serializer.is_valid(raise_exception=True)
-            serializer.save(id_asignacion=asignacion, last_edited_by=request.user, status='draft')
+            with transaction.atomic():
+                breakdown = serializer.save(id_asignacion=asignacion, last_edited_by=request.user, status='draft')
+                _save_mold_files(breakdown, archivos)
         else:
             asignacion = _get_asignacion_trimming(id_asignacion, proveedor)
             if not asignacion:
@@ -296,9 +349,11 @@ class AsignacionResponderView(APIView):
                 return Response({'detail': error}, status=status.HTTP_403_FORBIDDEN)
             if hasattr(asignacion, 'cost_breakdown'):
                 return Response({'detail': 'Ya existe un borrador o respuesta para esta asignación.'}, status=status.HTTP_409_CONFLICT)
-            serializer = CostBreakdownTrimmingCreateSerializer(data=request.data)
+            serializer = CostBreakdownTrimmingCreateSerializer(data=payload)
             serializer.is_valid(raise_exception=True)
-            serializer.save(id_asignacion=asignacion, last_edited_by=request.user, status='draft')
+            with transaction.atomic():
+                breakdown = serializer.save(id_asignacion=asignacion, last_edited_by=request.user, status='draft')
+                _save_trimming_files(breakdown, archivos)
 
         return Response({'detail': 'Borrador guardado correctamente.'}, status=status.HTTP_201_CREATED)
 
@@ -347,6 +402,7 @@ class AsignacionBorradorActualizarView(APIView):
     Actualiza el borrador. Solo si status=draft; rechaza si ya está submitted.
     """
     permission_classes = [IsProveedor]
+    parser_classes = [MultiPartParser, JSONParser]
 
     @extend_schema(
         summary="Actualizar borrador de cotización (Save Draft — ediciones subsecuentes)",
@@ -384,6 +440,10 @@ class AsignacionBorradorActualizarView(APIView):
             return Response({'detail': "El parámetro 'tipo' debe ser 'mold' o 'trimming'."}, status=status.HTTP_400_BAD_REQUEST)
 
         proveedor = request.user.proveedor
+        payload = _quotation_payload(request)
+        archivos, file_error_response = _validate_quotation_files(request)
+        if file_error_response:
+            return file_error_response
 
         if tipo == 'mold':
             asignacion = _get_asignacion_mold(id_asignacion, proveedor)
@@ -397,9 +457,11 @@ class AsignacionBorradorActualizarView(APIView):
             breakdown = asignacion.cost_breakdown
             if breakdown.status == Cost_Breakdown_Mold.Status.SUBMITTED:
                 return Response({'detail': 'La respuesta ya fue enviada y no puede modificarse.'}, status=status.HTTP_403_FORBIDDEN)
-            serializer = CostBreakdownMoldUpdateSerializer(breakdown, data=request.data, partial=True)
+            serializer = CostBreakdownMoldUpdateSerializer(breakdown, data=payload, partial=True)
             serializer.is_valid(raise_exception=True)
-            serializer.save(last_edited_by=request.user)
+            with transaction.atomic():
+                breakdown = serializer.save(last_edited_by=request.user)
+                _save_mold_files(breakdown, archivos)
         else:
             asignacion = _get_asignacion_trimming(id_asignacion, proveedor)
             if not asignacion:
@@ -412,9 +474,11 @@ class AsignacionBorradorActualizarView(APIView):
             breakdown = asignacion.cost_breakdown
             if breakdown.status == Cost_Breakdown_Trimming.Status.SUBMITTED:
                 return Response({'detail': 'La respuesta ya fue enviada y no puede modificarse.'}, status=status.HTTP_403_FORBIDDEN)
-            serializer = CostBreakdownTrimmingUpdateSerializer(breakdown, data=request.data, partial=True)
+            serializer = CostBreakdownTrimmingUpdateSerializer(breakdown, data=payload, partial=True)
             serializer.is_valid(raise_exception=True)
-            serializer.save(last_edited_by=request.user)
+            with transaction.atomic():
+                breakdown = serializer.save(last_edited_by=request.user)
+                _save_trimming_files(breakdown, archivos)
 
         return Response({'detail': 'Borrador actualizado correctamente.'}, status=status.HTTP_200_OK)
 

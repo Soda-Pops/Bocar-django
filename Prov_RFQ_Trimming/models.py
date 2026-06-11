@@ -316,3 +316,20 @@ class Cost_Breakdown_Trimming(models.Model):
 
     class Meta:
         db_table = 'Cost_Breakdown_Trimming'
+
+
+class Cost_Breakdown_Trimming_File(models.Model):
+    id_cost_breakdown = models.ForeignKey(
+        Cost_Breakdown_Trimming,
+        on_delete=models.CASCADE,
+        related_name='archivos',
+    )
+    archivo = models.FileField(upload_to='Files/Cost_Breakdown_Trimming/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Archivo Cost Breakdown Trimming {self.id_cost_breakdown_id}'
+
+    class Meta:
+        db_table = 'Cost_Breakdown_Trimming_File'
+        ordering = ['uploaded_at']

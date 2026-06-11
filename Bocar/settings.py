@@ -231,7 +231,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # ---------------------------------------------------------------------------
 # File upload limits
 # ---------------------------------------------------------------------------
-MAX_UPLOAD_SIZE_MB       = int(os.environ.get('MAX_UPLOAD_SIZE_MB', 10))
+MAX_UPLOAD_SIZE_MB       = int(os.environ.get('MAX_UPLOAD_SIZE_MB', 100))
 MAX_FILES_PER_REQUEST    = int(os.environ.get('MAX_FILES_PER_REQUEST', 10))
 DATA_UPLOAD_MAX_MEMORY_SIZE  = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE  = MAX_UPLOAD_SIZE_MB * 1024 * 1024

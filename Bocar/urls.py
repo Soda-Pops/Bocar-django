@@ -3,6 +3,7 @@ from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from modulo_IA.views import predictions_proxy
 
 
 urlpatterns = [
@@ -33,6 +34,7 @@ urlpatterns = [
 
     # Módulo IA ------------------------------------------------------
     path('modulo-ia/', include('modulo_IA.urls')),
+    path('api_ia/v1/predictions/', predictions_proxy, name='ia-predictions-proxy'),
 
     # Historial / auditoría de RFQs -----------------------------------
     path('api_historial/v1/', include('historial.urls')),
