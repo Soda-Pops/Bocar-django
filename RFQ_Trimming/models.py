@@ -66,6 +66,8 @@ class RFQ_Trimming(models.Model):
     di_latest_trim_die_improvements_note = models.CharField(max_length=250, blank=True, default="")
     di_sketch_trim_die_concept           = models.BooleanField(default=False)
     di_sketch_trim_die_concept_note      = models.CharField(max_length=250, blank=True, default="")
+   
+   #Other Information
     di_trim_die_no1                      = models.BooleanField(default=False)
     di_trim_die_no1_note                 = models.CharField(max_length=250, blank=True, default="")
     di_trim_die_no2                      = models.BooleanField(default=False)

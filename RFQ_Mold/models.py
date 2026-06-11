@@ -122,6 +122,7 @@ class RFQ_Mold(models.Model):
     Sp_Pt_note           = models.CharField(max_length=250, blank=True, default="")
 
     # ─── Part Geometry ─────────────────────────────────────────────────────────
+    part_name             = models.CharField(max_length=255, blank=True, default="")
     alloy                 = models.CharField(max_length=100, blank=True, default="")
     part_dim_length_mm    = models.FloatField(null=True, blank=True)
     part_dim_width_mm     = models.FloatField(null=True, blank=True)
@@ -134,6 +135,7 @@ class RFQ_Mold(models.Model):
     gross_weight_g        = models.FloatField(null=True, blank=True)
 
     # ─── Tool Specification ────────────────────────────────────────────────────
+    three_plate_mold           = models.IntegerField(null=True, blank=True)
     number_of_gates_per_part   = models.IntegerField(null=True, blank=True)
     number_of_parts_per_stroke = models.IntegerField(null=True, blank=True)
     number_of_tools            = models.IntegerField(null=True, blank=True)

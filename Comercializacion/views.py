@@ -594,13 +594,21 @@ class ExtensionTiempoResolverView(APIView):
 # COMPARATIVA DE PRECIOS POR PROVEEDOR
 # ─────────────────────────────────────────────────────────────────────────────
 
-_PRECIO_CAMPOS = (
-    'accs_grand_total_sum',
-    'mat_grand_total_sum',
-    'grand_total_sum',
-    'corr_grand_total_sum',
-    'log_grand_total_sum',
-)
+_PRECIO_CAMPOS_MOLD = {
+    'accs_grand_total_sum': 'accs_grand_total_sum',
+    'mat_grand_total_sum': 'mat_grand_total_sum',
+    'grand_total_sum': 'grand_total_sum',
+    'corr_grand_total_sum': 'corr_grand_total_sum',
+    'log_grand_total_sum': 'log_grand_total_sum',
+}
+
+_PRECIO_CAMPOS_TRIMMING = {
+    'accs_grand_total_sum': 'accs_grand_total_sum',
+    'mat_grand_total_sum': 'mat_grand_total_sum',
+    'grand_total_sum': 'manuf_grand_total_sum',
+    'corr_grand_total_sum': 'adj_grand_total_sum',
+    'log_grand_total_sum': 'log_grand_total_sum',
+}
 
 
 class ComparativaProveedoresView(APIView):
@@ -667,6 +675,8 @@ class ComparativaProveedoresView(APIView):
                 .select_related('id_Proveedor__id_account', 'cost_breakdown')
             )
 
+        precio_campos = _PRECIO_CAMPOS_MOLD if tipo == 'mold' else _PRECIO_CAMPOS_TRIMMING
+
         resultado = []
         for asignacion in asignaciones:
             try:
@@ -677,7 +687,10 @@ class ComparativaProveedoresView(APIView):
             proveedor = asignacion.id_Proveedor
             usuario = proveedor.id_account
 
-            totales = {campo: getattr(cb, campo, 0.0) for campo in _PRECIO_CAMPOS}
+            totales = {
+                response_field: getattr(cb, model_field, 0.0)
+                for response_field, model_field in precio_campos.items()
+            }
             resultado.append({
                 'usuario_id': usuario.id,
                 'nombre_empresa': proveedor.company_name,

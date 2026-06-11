@@ -7,7 +7,7 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from users.permissions import IsIndustrializacionUser
 from General_RFQs.utils import validar_archivos
 from django.conf import settings
-from django.db import transaction
+from django.db import models, transaction
 
 from RFQ_Mold.models import RFQ_Mold, RFQ_Mold_EditRequest
 from RFQ_Mold.serializers import (
@@ -47,10 +47,83 @@ def _tipo_invalido():
         status=status.HTTP_400_BAD_REQUEST,
     )
 
-def _desc_requerido(rfq):
-    if not getattr(rfq, 'DESC', '').strip():
+MOLD_SUBMIT_REQUIRED_FIELDS = [
+    'due_date', 'DESC', 'PPY', 'CUST', 'PT', 'PNUM', 'PRLF', 'TT', 'DTQ', 'ELAB',
+    'SMACH', 'No_CAV', 'No_ofHS', 'No_ofMS', 'ThirdPSupp', 'No_subc', 'Jco', 'QcSys',
+    'Ihtcs', 'Spin', 'HICS', 'CMGOM', 'SPforThermoR', 'NReturnV', 'VacV', 'ChillBl',
+    'No_Pl_Jco_sys', 'Oth',
+    'D_3D', 'D_3D_note', 'FlAn', 'FlAn_note', 'Run_des', 'Run_des_note',
+    'Run_and_over_mod', 'Run_and_over_mod_note', 'ManProp', 'ManProp_note', 'Ldi',
+    'Ldi_note', 'Add_of_mach_st', 'Add_of_mach_st_note', 'Sketch_d_conc_inc_s_dim',
+    'Sketch_d_conc_inc_s_dim_note', 'D2_Dr_Des_PDF_CNF', 'D2_Dr_Des_PDF_CNF_note',
+    'D3_Mod_solid_Native', 'D3_Mod_solid_Native_note',
+    'Comp_Die', 'Comp_Die_note', 'Subseq_D', 'Subseq_D_note', 'Set_of_repl_H13',
+    'Set_of_repl_H13_note', 'Sp_set_of_EI', 'Sp_set_of_EI_note', 'FICF', 'FICF_note',
+    'HCLS', 'HCLS_note', 'Fr_Refur', 'Fr_Refur_note',
+    'Eyeb', 'Eyeb_note', 'Oil_Water_Conn', 'Oil_Water_Conn_note', 'STM_1and2',
+    'STM_1and2_note', 'CMM_dim_rep_cai', 'CMM_dim_rep_cai_note', 'GOM_rep_ass',
+    'GOM_rep_ass_note', 'H_val_subc_in', 'H_val_subc_in_note', 'Dim_corr_opt',
+    'Dim_corr_opt_note', 'Sp_Pt', 'Sp_Pt_note',
+    'part_name', 'alloy', 'part_dim_length_mm', 'part_dim_width_mm', 'part_dim_height_mm',
+    'min_wall_thickness_mm', 'max_wall_thickness_mm', 'projected_area_cm2', 'surface_cm2',
+    'volume_cm3', 'gross_weight_g', 'three_plate_mold', 'number_of_gates_per_part',
+    'number_of_parts_per_stroke', 'number_of_tools', 'comments',
+]
+
+TRIMMING_SUBMIT_REQUIRED_FIELDS = [
+    'due_date', 'DESC', 'PPY', 'CUST', 'PNUM', 'PRLF',
+    'press', 'no_of_cavities', 'no_of_hydraulic_slides', 'fully_automatic_process',
+    'presence_detectors', 'trimming_process_condition', 'admissible_residual_burr_mm',
+    'castings_supplied_by_auma', 'adjustments_optimization_at_tool', 'gas_springs',
+    'di_design_3d_model', 'di_design_3d_model_note', 'di_design_2d_data',
+    'di_design_2d_data_note', 'di_punch_pins_data', 'di_punch_pins_data_note',
+    'di_manufacturing_proposals', 'di_manufacturing_proposals_note',
+    'di_latest_trim_die_improvements', 'di_latest_trim_die_improvements_note',
+    'di_sketch_trim_die_concept', 'di_sketch_trim_die_concept_note', 'di_trim_die_no1',
+    'di_trim_die_no1_note', 'di_trim_die_no2', 'di_trim_die_no2_note',
+    'di_set_of_spare_parts', 'di_set_of_spare_parts_note',
+    'di_hydraulic_cylinders_limit_sw', 'di_hydraulic_cylinders_limit_sw_note',
+    'oi_frame_refurbishment', 'oi_set_of_electric_wires', 'oi_others',
+    'oi_delivery_date_imex', 'oi_ejector_system_fixed_side',
+    'part_name', 'part_number', 'part_dim_length_mm', 'part_dim_width_mm',
+    'part_dim_height_mm', 'min_wall_thickness_mm', 'max_wall_thickness_mm',
+    'projected_area_cm2', 'surface_cm2', 'volume_cm3', 'gross_weight_g',
+    'press_type', 'quantity_of_punch_pins', 'comments',
+]
+
+
+def _field_is_missing(rfq, field_name):
+    field = rfq._meta.get_field(field_name)
+    value = getattr(rfq, field_name, None)
+
+    if isinstance(field, models.BooleanField):
+        return value is None
+    if isinstance(field, (models.IntegerField, models.FloatField, models.DecimalField)):
+        return value is None
+    if isinstance(field, (models.DateField, models.DateTimeField)):
+        return value is None
+    if isinstance(field, (models.CharField, models.TextField)):
+        return value is None or not str(value).strip()
+    return value is None
+
+
+def _validar_completitud(rfq, tipo):
+    required_fields = MOLD_SUBMIT_REQUIRED_FIELDS if tipo == 'mold' else TRIMMING_SUBMIT_REQUIRED_FIELDS
+    missing = []
+    for field_name in required_fields:
+        try:
+            if _field_is_missing(rfq, field_name):
+                missing.append(field_name)
+        except Exception:
+            missing.append(field_name)
+
+    if missing:
         return Response(
-            {'detail': 'El campo DESC es obligatorio antes de enviar el RFQ a Comercialización.'},
+            {
+                'detail': 'El RFQ tiene campos obligatorios incompletos.',
+                'code': 'rfq_incompleto',
+                'missing_fields': missing,
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
     return None
@@ -348,9 +421,9 @@ class RFQEnviarAComercializacionView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            desc_error = _desc_requerido(rfq)
-            if desc_error:
-                return desc_error
+            completeness_error = _validar_completitud(rfq, tipo)
+            if completeness_error:
+                return completeness_error
 
         else:
             try:
@@ -379,9 +452,9 @@ class RFQEnviarAComercializacionView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            desc_error = _desc_requerido(rfq)
-            if desc_error:
-                return desc_error
+            completeness_error = _validar_completitud(rfq, tipo)
+            if completeness_error:
+                return completeness_error
 
         with transaction.atomic():
             if tipo == 'mold':
