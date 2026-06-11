@@ -1,9 +1,12 @@
 import json
+import logging
 import re
 
 from chatbot.context import build_system_prompt, get_tools_for_role
 from chatbot.llm import get_llm
 import chatbot.tools as tool_functions
+
+logger = logging.getLogger(__name__)
 
 
 # Mapea nombre de herramienta → función ejecutora.
@@ -42,11 +45,12 @@ def process_query(user, question: str, history: list[dict]) -> dict:
 
     # ── Paso 1: el LLM planea qué acción tomar ───────────────────────────────
     try:
-        plan_text = llm.chat(system_prompt, history, question)
+        plan_text = llm.chat(system_prompt, history, question, json_mode=True)
         plan      = _extract_json(plan_text)
     except (ValueError, json.JSONDecodeError):
         return {'answer': 'No pude interpretar tu pregunta. ¿Puedes reformularla?', 'sources': []}
-    except Exception:
+    except Exception as e:
+        logger.error('LLM chat error (plan step): %s', e, exc_info=True)
         return {'answer': 'El servicio de IA no está disponible en este momento.', 'sources': []}
 
     action = plan.get('action')

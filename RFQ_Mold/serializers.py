@@ -60,8 +60,12 @@ class RFQMoldCreateSerializer(serializers.ModelSerializer):
         archivos = validated_data.pop('archivos', [])
         rfq_mold = super().update(instance, validated_data)
 
-        for archivo in archivos:
-            RFQ_Mold_File.objects.create(rfq_mold=rfq_mold, archivo=archivo)
+        if archivos:
+            for file_obj in rfq_mold.archivos.all():
+                file_obj.archivo.delete(save=False)
+                file_obj.delete()
+            for archivo in archivos:
+                RFQ_Mold_File.objects.create(rfq_mold=rfq_mold, archivo=archivo)
 
         return rfq_mold
 

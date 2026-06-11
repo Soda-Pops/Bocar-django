@@ -68,8 +68,12 @@ class RFQTrimmingCreateSerializer(serializers.ModelSerializer):
         archivos = validated_data.pop('archivos', [])
         rfq_trimming = super().update(instance, validated_data)
 
-        for archivo in archivos:
-            RFQ_Trimming_File.objects.create(rfq_trimming=rfq_trimming, archivo=archivo)
+        if archivos:
+            for file_obj in rfq_trimming.archivos.all():
+                file_obj.archivo.delete(save=False)
+                file_obj.delete()
+            for archivo in archivos:
+                RFQ_Trimming_File.objects.create(rfq_trimming=rfq_trimming, archivo=archivo)
 
         return rfq_trimming
 
