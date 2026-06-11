@@ -38,6 +38,7 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(','
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -232,6 +233,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'Bocar' / 'static']
 
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -292,3 +294,39 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 GEMINI_MODEL   = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')
 LOCAL_LLM_URL  = os.environ.get('LOCAL_LLM_URL', 'http://localhost:11434')
 LOCAL_LLM_MODEL = os.environ.get('LOCAL_LLM_MODEL', 'llama3.2')
+
+
+# ----------------------------------------------------------------------------
+# Configuración de jazzmin para personalizacion del admin de Django
+# ----------------------------------------------------------------------------
+JAZZMIN_SETTINGS = {
+    'site_title': 'Bocar Admin Panel',
+    'site_header': 'Bocar',
+    'site_brand': 'Bocar',
+    'site_logo': 'logo.svg',           # ruta relativa a static/, ej: 'img/logo.png'
+    'welcome_sign': 'Welcome to the Bocar Admin Panel',
+    'copyright': 'Bocar © 2024',
+    'show_sidebar': True,
+    'navigation_expanded': True,
+    'icons': {
+        'users.CustomUser':                    'fas fa-users',
+        'RFQ_Mold.RFQ_Mold':                   'fas fa-cube',
+        'RFQ_Trimming.RFQ_Trimming':           'fas fa-cut',
+        'Proveedores.Proveedor':               'fas fa-truck',
+        'Asignaciones.Asignacion_Proveedor_Mold':     'fas fa-link',
+        'Asignaciones.Asignacion_Proveedor_Trimming': 'fas fa-link',
+        'historial.RFQHistorial':              'fas fa-history',
+        'chatbot.ChatbotQuery':                'fas fa-robot',
+    },
+    'default_icon_parents': 'fas fa-folder',
+    'default_icon_children': 'fas fa-circle',
+    'custom_css': 'css/admin_custom.css',
+}
+
+JAZZMIN_UI_TWEAKS = {
+    'theme': 'sandstone',
+    'default_theme_mode': 'auto',
+    'navbar': 'navbar-dark',
+    'sidebar': 'sidebar-dark-primary',
+    'accent': 'accent-primary',
+}
