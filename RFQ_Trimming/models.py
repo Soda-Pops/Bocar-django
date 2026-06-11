@@ -40,6 +40,7 @@ class RFQ_Trimming(models.Model):
     PNUM = models.CharField(max_length=100, blank=True, default="")
     PRLF = models.FloatField(default=0.0)
     DTQ  = models.DateField(null=True, blank=True)
+    previous_job = models.CharField(max_length=100, blank=True, default="")
 
     # ─── DCM ───────────────────────────────────────────────────────────────────
     press                            = models.CharField(max_length=100, blank=True, default="")
@@ -48,6 +49,7 @@ class RFQ_Trimming(models.Model):
     fully_automatic_process          = models.CharField(max_length=100, blank=True, default="")
     presence_detectors               = models.CharField(max_length=100, blank=True, default="")
     trimming_process_condition       = models.CharField(max_length=100, blank=True, default="")
+    punch_pins_required              = models.BooleanField(default=False)
     admissible_residual_burr_mm      = models.FloatField(null=True, blank=True)
     castings_supplied_by_auma        = models.CharField(max_length=100, blank=True, default="")
     adjustments_optimization_at_tool = models.CharField(max_length=100, blank=True, default="")
@@ -78,10 +80,16 @@ class RFQ_Trimming(models.Model):
     di_hydraulic_cylinders_limit_sw_note = models.CharField(max_length=250, blank=True, default="")
 
     # ─── Other Information ─────────────────────────────────────────────────────
+
+    #estos 3 llena nota
     oi_frame_refurbishment       = models.BooleanField(default=False)
     oi_set_of_electric_wires     = models.BooleanField(default=False)
     oi_others                    = models.CharField(max_length=255, blank=True, default="")
+    
+    #NO LLEVA NOTA
     oi_delivery_date_imex        = models.DateField(null=True, blank=True)
+
+    #este lleva nota 
     oi_ejector_system_fixed_side = models.CharField(max_length=100, blank=True, default="")
 
     # ─── Part Geometry ─────────────────────────────────────────────────────────
@@ -89,8 +97,7 @@ class RFQ_Trimming(models.Model):
     part_number = models.CharField(max_length=100, blank=True, default="")
 
     part_dim_length_mm    = models.FloatField(null=True, blank=True)
-    part_dim_width_mm     = models.FloatField(null=True, blank=True)
-    part_dim_height_mm    = models.FloatField(null=True, blank=True)
+    #2 campos no existian eliminados ya
     min_wall_thickness_mm = models.FloatField(null=True, blank=True)
     max_wall_thickness_mm = models.FloatField(null=True, blank=True)
     projected_area_cm2    = models.FloatField(null=True, blank=True)
@@ -100,11 +107,17 @@ class RFQ_Trimming(models.Model):
 
     # ─── Tool Specification ────────────────────────────────────────────────────
     press_type                      = models.CharField(max_length=100, blank=True, default="")
+    #Number of cavities, 
     introduction_extraction_process = models.CharField(max_length=100, blank=True, default="")
     biscuit_position                = models.CharField(max_length=100, blank=True, default="")
+    #Number of hydr. slides
     quantity_of_punch_pins          = models.CharField(max_length=100, blank=True, default="", help_text='Número o Defined by toolmaker')
+    #Admissible residual Burr in mm
     temperature_when_trimmed        = models.CharField(max_length=100, blank=True, default="")
+    #gas springs_specification
+    #Ejector system in fixed side
 
+    #Seccion de comments---------------------------------
     comments = models.TextField(blank=True, default="")
 
     def __str__(self):
