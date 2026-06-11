@@ -21,8 +21,12 @@ from .models import (
     SolicitudExtensionTrimming,
     ExtensionStatus,
 )
-from Prov_RFQ_Mold.models import Cost_Breakdown_Mold, Set_of_Cavities_Mold
-from Prov_RFQ_Trimming.models import Cost_Breakdown_Trimming
+from Prov_RFQ_Mold.models import (
+    Cost_Breakdown_Mold,
+    Cost_Breakdown_Mold_File,
+    Set_of_Cavities_Mold,
+)
+from Prov_RFQ_Trimming.models import Cost_Breakdown_Trimming, Cost_Breakdown_Trimming_File
 from .services import reopen_assignment_for_extension
 
 
@@ -110,6 +114,12 @@ class SetOfCavitiesMoldSerializer(serializers.ModelSerializer):
         exclude = ['id', 'id_cost_breakdown']
 
 
+class CostBreakdownMoldFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Cost_Breakdown_Mold_File
+        fields = ['id', 'archivo', 'uploaded_at']
+
+
 # Crear borrador (POST)
 class CostBreakdownMoldCreateSerializer(serializers.ModelSerializer):
     set_of_cavities = SetOfCavitiesMoldSerializer(required=False, allow_null=True)
@@ -129,6 +139,7 @@ class CostBreakdownMoldCreateSerializer(serializers.ModelSerializer):
 # Leer borrador/respuesta (GET)
 class CostBreakdownMoldDetailSerializer(serializers.ModelSerializer):
     set_of_cavities = SetOfCavitiesMoldSerializer(read_only=True)
+    archivos = CostBreakdownMoldFileSerializer(many=True, read_only=True)
 
     class Meta:
         model   = Cost_Breakdown_Mold
@@ -165,6 +176,12 @@ class CostBreakdownMoldUpdateSerializer(serializers.ModelSerializer):
 # RESPUESTA DEL PROVEEDOR — TRIMMING
 # ─────────────────────────────────────────────────────────────────────────────
 
+class CostBreakdownTrimmingFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Cost_Breakdown_Trimming_File
+        fields = ['id', 'archivo', 'uploaded_at']
+
+
 # Crear borrador (POST)
 class CostBreakdownTrimmingCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -174,6 +191,8 @@ class CostBreakdownTrimmingCreateSerializer(serializers.ModelSerializer):
 
 # Leer borrador/respuesta (GET)
 class CostBreakdownTrimmingDetailSerializer(serializers.ModelSerializer):
+    archivos = CostBreakdownTrimmingFileSerializer(many=True, read_only=True)
+
     class Meta:
         model   = Cost_Breakdown_Trimming
         exclude = ['id_asignacion', 'last_edited_by']

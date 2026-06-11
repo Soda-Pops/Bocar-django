@@ -240,14 +240,64 @@ class RFQCrearView(APIView):
 
 class RFQEditarView(APIView):
     """
-    PATCH /api_industrializacion/v1/rfq/<id>/?tipo=mold|trimming
-    Edita un RFQ existente. Solo permitido mientras el status sea En_Ind.
-    Si el RFQ ya está en En_Com o En_Pro la edición es rechazada.
-    Para desbloquearlo debe tramitarse una solicitud de edición aprobada.
-    Requiere role='Ind'. Solo el creador puede editar, salvo is_admin=True.
+    GET  /api_industrializacion/v1/rfq/<id>/?tipo=mold|trimming  → detalle del RFQ
+    PATCH /api_industrializacion/v1/rfq/<id>/?tipo=mold|trimming → editar (solo En_Ind, solo Ind)
+
+    El GET es accesible por Ind (todos los RFQs activos) y Com (solo COMERCIALIZACION/PROVEEDOR).
+    El PATCH requiere role=Ind y que el RFQ esté en En_Ind.
     """
-    permission_classes = [IsIndustrializacionUser]
+    permission_classes = [IsAuthenticated]
     parser_classes     = [MultiPartParser, JSONParser]
+
+    def get(self, request, pk):
+        tipo = _get_tipo(request)
+        if tipo not in ('mold', 'trimming'):
+            return _tipo_invalido()
+
+        role = getattr(request.user, 'role', None)
+
+        if tipo == 'mold':
+            qs = RFQ_Mold.objects.filter(logical_delete=False)
+            if role == 'Ind':
+                pass
+            elif role == 'Com':
+                qs = qs.filter(
+                    status__in=[RFQ_Mold.Status.COMERCIALIZACION, RFQ_Mold.Status.PROVEEDOR]
+                )
+            else:
+                return Response(
+                    {'detail': 'No tienes permiso para ver este RFQ.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            try:
+                rfq = qs.get(pk=pk)
+            except RFQ_Mold.DoesNotExist:
+                return Response(
+                    {'detail': 'RFQ Mold no encontrado.'},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return Response(RFQMoldDetailSerializer(rfq).data)
+        else:
+            qs = RFQ_Trimming.objects.filter(logical_delete=False)
+            if role == 'Ind':
+                pass
+            elif role == 'Com':
+                qs = qs.filter(
+                    status__in=[RFQ_Trimming.Status.COMERCIALIZACION, RFQ_Trimming.Status.PROVEEDOR]
+                )
+            else:
+                return Response(
+                    {'detail': 'No tienes permiso para ver este RFQ.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            try:
+                rfq = qs.get(pk=pk)
+            except RFQ_Trimming.DoesNotExist:
+                return Response(
+                    {'detail': 'RFQ Trimming no encontrado.'},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return Response(RFQTrimmingDetailSerializer(rfq).data)
 
     @extend_schema(
         summary="Editar RFQ (solo en En_Ind)",
@@ -278,6 +328,12 @@ class RFQEditarView(APIView):
         },
     )
     def patch(self, request, pk):
+        if getattr(request.user, 'role', None) != 'Ind':
+            return Response(
+                {'detail': 'Solo usuarios de Industrialización pueden editar RFQs.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         tipo = _get_tipo(request)
         if tipo not in ('mold', 'trimming'):
             return _tipo_invalido()

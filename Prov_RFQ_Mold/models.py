@@ -626,3 +626,20 @@ class Set_of_Cavities_Mold(models.Model):
 
     class Meta:
         db_table = 'Set_of_Cavities_Mold'
+
+
+class Cost_Breakdown_Mold_File(models.Model):
+    id_cost_breakdown = models.ForeignKey(
+        Cost_Breakdown_Mold,
+        on_delete=models.CASCADE,
+        related_name='archivos',
+    )
+    archivo = models.FileField(upload_to='Files/Cost_Breakdown_Mold/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Archivo Cost Breakdown Mold {self.id_cost_breakdown_id}'
+
+    class Meta:
+        db_table = 'Cost_Breakdown_Mold_File'
+        ordering = ['uploaded_at']
