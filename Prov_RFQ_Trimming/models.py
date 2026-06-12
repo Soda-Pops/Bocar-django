@@ -58,6 +58,7 @@ class Cost_Breakdown_Trimming(models.Model):
                                   )
     max_weight_for_trim_die     = models.FloatField(null=True, blank=True)
     comments                    = models.TextField(blank=True)
+    ctbd                        = models.JSONField(default=dict, blank=True)
 
     # MATERIAL COSTS
     mat_raw_materials_unit      = float_field()
