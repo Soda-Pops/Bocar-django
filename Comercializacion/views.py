@@ -27,6 +27,7 @@ from .serializers import (
     RFQTrimmingComercializacionSerializer,
     CrearAsignacionesSerializer,
     CerrarRFQSerializer,
+    ExtenderDeadlineRFQSerializer,
 )
 from datetime import date
 from django.db.models import Q
@@ -95,15 +96,16 @@ class RFQListComercializacionView(APIView):
     def get(self, request):
         visible_statuses = ['En_Com', 'En_Pro']
         visible_to_comercializacion = Q(status__in=visible_statuses) | Q(complete=True)
+        base_filter = {} if request.user.is_admin else {'logical_delete': False}
 
         molds = RFQ_Mold.objects.filter(
             visible_to_comercializacion,
-            logical_delete=False,
+            **base_filter,
         ).select_related('created_by').prefetch_related('asignaciones').order_by('-created_date')
 
         trimmings = RFQ_Trimming.objects.filter(
             visible_to_comercializacion,
-            logical_delete=False,
+            **base_filter,
         ).select_related('created_by').prefetch_related('asignaciones').order_by('-created_date')
 
         return Response({
@@ -811,5 +813,126 @@ class CerrarRFQView(APIView):
 
         return Response(
             {'detail': 'RFQ cerrado formalmente.'},
+            status=status.HTTP_200_OK,
+        )
+
+
+class ExtenderDeadlineRFQView(APIView):
+    """
+    PATCH /api_comercializacion/v1/rfq/<pk>/deadline/?tipo=mold|trimming
+    Extiende el due_date de un RFQ expirado y reabre sus asignaciones no respondidas.
+    Requiere role='Com'.
+    """
+    permission_classes = [IsComercializacionUser]
+
+    @extend_schema(
+        summary="Extender deadline de RFQ expirado",
+        description="""
+            Actualiza el `due_date` del RFQ y reabre las asignaciones activas no respondidas
+            asociadas a ese RFQ, asignándoles el mismo nuevo deadline.
+
+            Solo aplica a RFQs en En_Pro, no cerrados formalmente y no eliminados.
+            Requiere role='Com'.
+        """,
+        parameters=[_TIPO_PARAM],
+        request=ExtenderDeadlineRFQSerializer,
+        responses={
+            200: inline_serializer(
+                name='ExtenderDeadlineRFQResponse',
+                fields={
+                    'detail': serializers.CharField(),
+                    'due_date': serializers.DateField(),
+                    'assignments_reopened': serializers.IntegerField(),
+                }
+            ),
+            400: inline_serializer(
+                name='ExtenderDeadlineRFQBadRequest',
+                fields={'detail': serializers.CharField()}
+            ),
+            404: inline_serializer(
+                name='ExtenderDeadlineRFQNotFound',
+                fields={'detail': serializers.CharField()}
+            ),
+        },
+    )
+    def patch(self, request, pk):
+        tipo = request.query_params.get('tipo', '').lower()
+        if tipo not in ('mold', 'trimming'):
+            return _tipo_invalido()
+
+        serializer = ExtenderDeadlineRFQSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        new_due_date = serializer.validated_data['due_date']
+
+        with transaction.atomic():
+            if tipo == 'mold':
+                try:
+                    rfq = RFQ_Mold.objects.select_for_update().get(id=pk, logical_delete=False)
+                except RFQ_Mold.DoesNotExist:
+                    return Response({'detail': 'RFQ no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+                proveedor_status = RFQ_Mold.Status.PROVEEDOR
+                assignments = rfq.asignaciones.select_for_update().filter(
+                    logical_delete=False,
+                    is_answered=False,
+                )
+            else:
+                try:
+                    rfq = RFQ_Trimming.objects.select_for_update().get(id=pk, logical_delete=False)
+                except RFQ_Trimming.DoesNotExist:
+                    return Response({'detail': 'RFQ no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+                proveedor_status = RFQ_Trimming.Status.PROVEEDOR
+                assignments = rfq.asignaciones.select_for_update().filter(
+                    logical_delete=False,
+                    is_answered=False,
+                )
+
+            if rfq.complete:
+                return Response(
+                    {'detail': 'No se puede extender un RFQ cerrado formalmente.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if rfq.status != proveedor_status:
+                return Response(
+                    {'detail': 'Solo se puede extender un RFQ enviado a proveedores.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if new_due_date <= rfq.due_date:
+                return Response(
+                    {'detail': 'El nuevo due_date debe ser posterior al due_date actual del RFQ.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if not assignments.exists():
+                return Response(
+                    {'detail': 'No hay asignaciones pendientes por reabrir para este RFQ.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            previous_due_date = rfq.due_date
+            rfq.due_date = new_due_date
+            rfq.save(update_fields=['due_date'])
+            reopened_count = assignments.update(due_date=new_due_date, is_closed=False)
+
+            registrar_historial(
+                rfq_tipo = tipo,
+                rfq_id   = rfq.id,
+                evento   = RFQHistorial.Evento.EXTENSION_APROBADA,
+                actor    = request.user,
+                detalle  = {
+                    'due_date_anterior': str(previous_due_date),
+                    'nueva_fecha': str(new_due_date),
+                    'assignments_reopened': reopened_count,
+                    'origen': 'rfq_deadline',
+                },
+            )
+
+        return Response(
+            {
+                'detail': 'Deadline del RFQ extendido correctamente.',
+                'due_date': new_due_date,
+                'assignments_reopened': reopened_count,
+            },
             status=status.HTTP_200_OK,
         )

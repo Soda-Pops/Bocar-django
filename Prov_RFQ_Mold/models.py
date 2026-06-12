@@ -35,6 +35,13 @@ class Cost_Breakdown_Mold(models.Model):
         choices=Currency.choices,
         default=Currency.USD,
     )
+    # Datos generales que captura el proveedor (antes se descartaban).
+    supplier_name        = models.CharField(max_length=255, blank=True)
+    max_weight_for_mold  = models.FloatField(null=True, blank=True)
+    comments             = models.TextField(blank=True)
+    # CTBD (Cost and Timing Breakdown): resumen de tablas M1 / TOOL REP /
+    # SET OF CAV + metadata (SUPP/SIGN/DATE/QT/PREP/INC) que llena el proveedor.
+    ctbd                 = models.JSONField(default=dict, blank=True)
 
     # ----------------------------------
     # ACCESSORIES COSTS
