@@ -111,6 +111,7 @@ class RFQMoldComercializacionSerializer(serializers.ModelSerializer):
             'nombre_pieza',
             'status',
             'complete',
+            'logical_delete',
             'tipo',
             'deadline',
             'fecha_creacion',
@@ -157,6 +158,7 @@ class RFQTrimmingComercializacionSerializer(serializers.ModelSerializer):
             'nombre_pieza',
             'status',
             'complete',
+            'logical_delete',
             'tipo',
             'deadline',
             'fecha_creacion',
@@ -172,6 +174,17 @@ class RFQTrimmingComercializacionSerializer(serializers.ModelSerializer):
 
 class CerrarRFQSerializer(serializers.Serializer):
     closure_reason = serializers.CharField(max_length=1000)
+
+
+class ExtenderDeadlineRFQSerializer(serializers.Serializer):
+    due_date = serializers.DateField()
+
+    def validate_due_date(self, value):
+        if value <= date.today():
+            raise serializers.ValidationError(
+                'El nuevo due_date debe ser una fecha futura.'
+            )
+        return value
 
 
 class CrearAsignacionesSerializer(serializers.Serializer):

@@ -8,6 +8,7 @@ from .views import (
     ExtensionTiempoResolverView,
     ComparativaProveedoresView,
     CerrarRFQView,
+    ExtenderDeadlineRFQView,
 )
 
 urlpatterns = [
@@ -39,4 +40,8 @@ urlpatterns = [
     # POST — cierra formalmente un RFQ registrando proveedor y motivo
     # Query param requerido: ?tipo=mold|trimming
     path('rfq/<int:pk>/cerrar/', CerrarRFQView.as_view(), name='comercializacion-cerrar-rfq'),
+
+    # PATCH — extiende el deadline de un RFQ expirado y reabre asignaciones pendientes
+    # Query param requerido: ?tipo=mold|trimming
+    path('rfq/<int:pk>/deadline/', ExtenderDeadlineRFQView.as_view(), name='comercializacion-extender-deadline-rfq'),
 ]
