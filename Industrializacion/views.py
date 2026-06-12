@@ -256,8 +256,10 @@ class RFQEditarView(APIView):
 
         role = getattr(request.user, 'role', None)
 
+        base_filter = {} if request.user.is_admin else {'logical_delete': False}
+
         if tipo == 'mold':
-            qs = RFQ_Mold.objects.filter(logical_delete=False)
+            qs = RFQ_Mold.objects.filter(**base_filter)
             if role == 'Ind':
                 pass
             elif role == 'Com':
@@ -278,7 +280,7 @@ class RFQEditarView(APIView):
                 )
             return Response(RFQMoldDetailSerializer(rfq).data)
         else:
-            qs = RFQ_Trimming.objects.filter(logical_delete=False)
+            qs = RFQ_Trimming.objects.filter(**base_filter)
             if role == 'Ind':
                 pass
             elif role == 'Com':
@@ -664,12 +666,14 @@ class RFQListIndustrializacionView(APIView):
         user = request.user
 
         from django.db.models import Q
-        molds = RFQ_Mold.objects.filter(logical_delete=False).filter(
+        base_filter = {} if user.is_admin else {'logical_delete': False}
+
+        molds = RFQ_Mold.objects.filter(**base_filter).filter(
             Q(status=RFQ_Mold.Status.INDUSTRIALIZACION, created_by=user) |
             ~Q(status=RFQ_Mold.Status.INDUSTRIALIZACION)
         ).select_related('created_by').order_by('-created_date')
 
-        trimmings = RFQ_Trimming.objects.filter(logical_delete=False).filter(
+        trimmings = RFQ_Trimming.objects.filter(**base_filter).filter(
             Q(status=RFQ_Trimming.Status.INDUSTRIALIZACION, created_by=user) |
             ~Q(status=RFQ_Trimming.Status.INDUSTRIALIZACION)
         ).select_related('created_by').order_by('-created_date')

@@ -21,6 +21,7 @@ class RFQEditarViewTests(APITestCase):
             username='industrializacion',
             email='industrializacion@example.com',
             password='test-pass-123',
+            role='Ind',
         )
         self.client.force_authenticate(self.user)
 
@@ -73,3 +74,73 @@ class RFQEditarViewTests(APITestCase):
         rfq.refresh_from_db()
         self.assertEqual(rfq.DESC, 'actualizado')
         self.assertEqual(rfq.archivos.count(), 1)
+
+
+class RFQAdminLogicalDeleteVisibilityTests(APITestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.normal_user = User.objects.create_user(
+            username='ind-normal',
+            email='ind-normal@example.com',
+            password='test-pass-123',
+            role='Ind',
+        )
+        self.admin_user = User.objects.create_user(
+            username='ind-admin',
+            email='ind-admin@example.com',
+            password='test-pass-123',
+            role='Ind',
+            is_admin=True,
+        )
+        self.deleted_mold = RFQ_Mold.objects.create(
+            created_by=self.normal_user,
+            due_date='2026-06-18',
+            DESC='deleted mold',
+            status=RFQ_Mold.Status.COMERCIALIZACION,
+            logical_delete=True,
+        )
+        self.deleted_trimming = RFQ_Trimming.objects.create(
+            created_by=self.normal_user,
+            due_date='2026-06-18',
+            DESC='deleted trimming',
+            status=RFQ_Trimming.Status.COMERCIALIZACION,
+            logical_delete=True,
+        )
+
+    def test_admin_list_includes_logically_deleted_rfqs(self):
+        self.client.force_authenticate(self.admin_user)
+
+        response = self.client.get(reverse('industrializacion-rfq-list'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(self.deleted_mold.id, [item['id'] for item in response.data['mold']])
+        self.assertIn(self.deleted_trimming.id, [item['id'] for item in response.data['trimming']])
+        self.assertTrue(response.data['mold'][0]['logical_delete'])
+
+    def test_normal_user_list_excludes_logically_deleted_rfqs(self):
+        self.client.force_authenticate(self.normal_user)
+
+        response = self.client.get(reverse('industrializacion-rfq-list'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertNotIn(self.deleted_mold.id, [item['id'] for item in response.data['mold']])
+        self.assertNotIn(self.deleted_trimming.id, [item['id'] for item in response.data['trimming']])
+
+    def test_admin_can_get_deleted_rfq_detail(self):
+        self.client.force_authenticate(self.admin_user)
+
+        response = self.client.get(
+            f"{reverse('industrializacion-rfq-editar', kwargs={'pk': self.deleted_mold.pk})}?tipo=mold",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['logical_delete'])
+
+    def test_normal_user_get_deleted_rfq_detail_returns_404(self):
+        self.client.force_authenticate(self.normal_user)
+
+        response = self.client.get(
+            f"{reverse('industrializacion-rfq-editar', kwargs={'pk': self.deleted_mold.pk})}?tipo=mold",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
