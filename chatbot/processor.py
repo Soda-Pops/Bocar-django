@@ -19,8 +19,9 @@ TOOL_MAP = {
     'listar_rfqs_todos':  lambda user, p: tool_functions.listar_rfqs_todos(**p),
     'rfqs_por_status':    lambda user, p: tool_functions.rfqs_por_status(**p),
     'listar_proveedores': lambda user, p: tool_functions.listar_proveedores(),
-    'listar_asignaciones':lambda user, p: tool_functions.listar_asignaciones(**p),
-    'mis_asignaciones':   lambda user, p: tool_functions.mis_asignaciones(user, **p),
+    'listar_asignaciones':    lambda user, p: tool_functions.listar_asignaciones(**p),
+    'mis_asignaciones':       lambda user, p: tool_functions.mis_asignaciones(user, **p),
+    'contar_rfqs_eliminados': lambda user, p: tool_functions.contar_rfqs_eliminados(**p),
 }
 
 _INTERPRET_SYSTEM = (
@@ -41,7 +42,7 @@ def _extract_json(text: str) -> dict:
 def process_query(user, question: str, history: list[dict]) -> dict:
     llm            = get_llm()
     system_prompt  = build_system_prompt(user)
-    allowed_tools  = get_tools_for_role(user.role)
+    allowed_tools  = get_tools_for_role(user.role, user.is_admin)
 
     # ── Paso 1: el LLM planea qué acción tomar ───────────────────────────────
     try:
@@ -90,10 +91,10 @@ def process_query(user, question: str, history: list[dict]) -> dict:
 
         # ── Paso 2: el LLM interpreta los resultados en lenguaje natural ──────
         interpretation_msg = (
-            f"El usuario preguntó: '{question}'\n\n"
-            f"Resultados de la consulta:\n"
+            f"The user asked: '{question}'\n\n"
+            f"Query results:\n"
             f"{json.dumps(db_results, ensure_ascii=False, default=str)}\n\n"
-            f"Responde al usuario de forma concisa y natural."
+            f"Respond to the user concisely and naturally in English."
         )
 
         try:
