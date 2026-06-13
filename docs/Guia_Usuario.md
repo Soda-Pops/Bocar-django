@@ -1,327 +1,207 @@
-# Guía de Usuario — Sistema Bocar
+# Guía de Usuario — Cómo correr el proyecto Bocar
 
-> Esta guía explica cómo instalar y ejecutar el proyecto, qué contiene cada módulo y qué hace cada endpoint disponible.
+> **Versión 3.0 · 2026-06-12 · Equipo Soda-Pops**
+> Guía práctica para instalar, configurar y ejecutar el backend.
+> Para arquitectura y diseño ver [documentacion_tecnica.md](documentacion_tecnica.md); para la lista de endpoints ver [endpoints.md](endpoints.md).
 
 ---
 
 ## Índice
 
 1. [Requisitos previos](#1-requisitos-previos)
-2. [Instalación con Conda](#2-instalación-con-conda)
-3. [Instalación con virtualenv](#3-instalación-con-virtualenv)
-4. [Configuración del entorno](#4-configuración-del-entorno)
-5. [Ejecución del proyecto](#5-ejecución-del-proyecto)
-6. [Descripción de módulos](#6-descripción-de-módulos)
-7. [Endpoints disponibles](#7-endpoints-disponibles)
+2. [Clonar el proyecto](#2-clonar-el-proyecto)
+3. [Crear y activar el ambiente virtual](#3-crear-y-activar-el-ambiente-virtual)
+4. [Instalar dependencias](#4-instalar-dependencias)
+5. [Configurar variables de entorno](#5-configurar-variables-de-entorno)
+6. [Migraciones y base de datos](#6-migraciones-y-base-de-datos)
+7. [Correr el servidor](#7-correr-el-servidor)
+8. [Datos de prueba (opcional)](#8-datos-de-prueba-opcional)
+9. [Notificaciones: RabbitMQ + Celery (opcional)](#9-notificaciones-rabbitmq--celery-opcional)
+10. [Comandos frecuentes](#10-comandos-frecuentes)
+11. [Problemas comunes](#11-problemas-comunes)
 
 ---
 
 ## 1. Requisitos previos
 
-- Python 3.14 o superior instalado en el sistema.
-- RabbitMQ instalado y corriendo (solo necesario si `NOTIFICATIONS_ENABLED=True`).
-- Git para clonar el repositorio.
-- Conda o pip disponibles en el sistema.
+- Python 3.14+ → verificar con `python --version`
+- Git
+- `virtualenv` (`pip install virtualenv`)
+- (Opcional) Docker — solo si vas a activar las notificaciones por correo
 
 ---
 
-## 2. Instalación con Conda
+## 2. Clonar el proyecto
 
 ```bash
-# 1. Clonar el repositorio
 git clone <url-del-repositorio>
 cd Bocar-django
-
-# 2. Crear un entorno conda con Python 3.14
-conda create -n bocar_django python=3.14 -y
-
-# 3. Activar el entorno
-conda activate bocar_django
-
-# 4. Instalar las dependencias principales
-pip install django==6.0.4
-pip install djangorestframework==3.17.1
-pip install djangorestframework-simplejwt==5.5.1
-pip install djoser==2.3.3
-pip install drf-spectacular==0.29.0
-pip install django-cors-headers==4.9.0
-pip install django-countries==8.2.0
-pip install celery==5.6.3
-pip install python-dotenv==1.2.2
-pip install requests==2.34.2
-
-# 5. Instalar dependencia del chatbot (solo si se usa)
-pip install google-generativeai==0.8.6
-
-# 6. Configurar variables de entorno (ver sección 4)
-cp .env.example .env
-# Editar .env con los valores reales
-
-# 7. Aplicar migraciones
-python manage.py migrate
-
-# 8. Crear superusuario (opcional, para acceder al admin)
-python manage.py createsuperuser
-```
-
-Para desactivar el entorno cuando termines:
-```bash
-conda deactivate
 ```
 
 ---
 
-## 3. Instalación con virtualenv
+## 3. Crear y activar el ambiente virtual
 
 ```bash
-# 1. Clonar el repositorio
-git clone <url-del-repositorio>
-cd Bocar-django
+# Instalar virtualenv (solo la primera vez)
+pip install virtualenv
 
-# 2. Crear el entorno virtual
-python -m venv .venv
+# Crear el ambiente
+virtualenv venv
 
-# 3. Activar el entorno virtual
-# En Windows:
-.venv\Scripts\activate
-# En macOS / Linux:
-source .venv/bin/activate
+# Activar en Windows (PowerShell):
+venv\Scripts\activate
 
-# 4. Instalar las dependencias
-pip install django==6.0.4
-pip install djangorestframework==3.17.1
-pip install djangorestframework-simplejwt==5.5.1
-pip install djoser==2.3.3
-pip install drf-spectacular==0.29.0
-pip install django-cors-headers==4.9.0
-pip install django-countries==8.2.0
-pip install celery==5.6.3
-pip install python-dotenv==1.2.2
-pip install requests==2.34.2
-
-# 5. Instalar dependencia del chatbot (solo si se usa)
-pip install google-generativeai==0.8.6
-
-# 6. Configurar variables de entorno (ver sección 4)
-cp .env.example .env
-# Editar .env con los valores reales
-
-# 7. Aplicar migraciones
-python manage.py migrate
-
-# 8. Crear superusuario (opcional)
-python manage.py createsuperuser
+# Activar en macOS / Linux:
+source venv/bin/activate
 ```
 
-Para desactivar el entorno cuando termines:
-```bash
-deactivate
-```
+El prompt debe mostrar el prefijo `(venv)`.
+
+> Para salir del ambiente cuando termines: `deactivate`.
 
 ---
 
-## 4. Configuración del entorno
-
-Copia `.env.example` a `.env` y rellena los valores:
+## 4. Instalar dependencias
 
 ```bash
-# Django
-DJANGO_SECRET_KEY=genera-una-clave-aleatoria-larga
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# Notificaciones por correo
-NOTIFICATIONS_ENABLED=False
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
-BOCAR_EMAIL_USER=correo@dominio.com
-BOCAR_EMAIL_PASSWORD=
-
-# Celery / RabbitMQ
-CELERY_BROKER_URL=amqp://guest:guest@localhost:5672//
-
-# Chatbot
-LLM_BACKEND=gemini
-GEMINI_API_KEY=tu-api-key-de-google
-GEMINI_MODEL=gemini-2.0-flash
+pip install -r requirements.txt
 ```
 
-Para generar una `DJANGO_SECRET_KEY` segura:
+Debe terminar con `Successfully installed ...` sin errores.
+
+---
+
+## 5. Configurar variables de entorno
+
+```bash
+# macOS / Linux:
+cp .env.example .env
+
+# Windows PowerShell:
+Copy-Item .env.example .env
+```
+
+Edita `.env` y coloca una clave en `DJANGO_SECRET_KEY` (sin ella el servidor **no arranca**). Para generar una:
+
 ```bash
 python -c "import secrets,string; print(''.join(secrets.choice(string.ascii_letters+string.digits+'!@#%^&*(-_=+)') for _ in range(60)))"
 ```
 
+El resto de las variables tienen defaults que funcionan para desarrollo (notificaciones apagadas, SQLite, correos a consola). Solo tócalas si vas a usar esa función:
+
+| Variable | Tócala si... |
+|---|---|
+| `NOTIFICATIONS_ENABLED`, `EMAIL_BACKEND`, `BOCAR_EMAIL_*`, `CELERY_BROKER_URL` | ...vas a enviar correos reales (ver sección 9) |
+| `LLM_BACKEND`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `LOCAL_LLM_*` | ...vas a usar el chatbot |
+| `MAX_UPLOAD_SIZE_MB`, `MAX_FILES_PER_REQUEST` | ...necesitas cambiar los límites de archivos (default: 100 MB / 10 archivos) |
+
+> ⚠️ Nunca subas el `.env` al repositorio — solo se versiona `.env.example`.
+
 ---
 
-## 5. Ejecución del proyecto
+## 6. Migraciones y base de datos
 
-### Servidor de desarrollo
+```bash
+# Aplicar las migraciones (crea db.sqlite3 la primera vez)
+python manage.py migrate
+
+# Crear un usuario administrador para entrar a /admin/
+python manage.py createsuperuser
+```
+
+Si modificaste algún modelo y necesitas **generar** migraciones nuevas:
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+---
+
+## 7. Correr el servidor
 
 ```bash
 python manage.py runserver
 ```
 
-El servidor queda disponible en `http://localhost:8000`.
+Debe mostrar `Starting development server at http://127.0.0.1:8000/`.
 
-### Worker de Celery (notificaciones)
+**URLs útiles:**
 
-Necesario solo si `NOTIFICATIONS_ENABLED=True`. Abrir una terminal separada:
+| URL | Qué es |
+|---|---|
+| `http://localhost:8000/schema/swagger/` | Swagger — probar todos los endpoints |
+| `http://localhost:8000/schema/redoc/` | ReDoc — documentación de la API |
+| `http://localhost:8000/admin/` | Panel de administración (crear usuarios y asignar roles) |
+
+Para correr en otro puerto: `python manage.py runserver 8080`.
+
+---
+
+## 8. Datos de prueba (opcional)
+
+El script `seed_chatbot_data.py` llena la BD con datos sintéticos (5 RFQ Mold, 3 Trimming, 1 proveedor, 2 asignaciones).
+
+1. Primero crea estos usuarios desde `/admin/` con su rol:
+   - `ind.usuario@bocar-test.mx` → rol `Ind`
+   - `com.usuario@bocar-test.mx` → rol `Com`
+   - `prov.alpha@bocar-test.mx` → rol `Pro`
+2. Ejecuta:
+   ```bash
+   python seed_chatbot_data.py
+   ```
+
+---
+
+## 9. Notificaciones: RabbitMQ + Celery (opcional)
+
+Solo si pusiste `NOTIFICATIONS_ENABLED=True` en el `.env`.
 
 ```bash
+# 1. Levantar RabbitMQ (consola de administración en http://localhost:15672, guest/guest)
+docker run -d -p 5672:5672 -p 15672:15672 rabbitmq:management
+
+# 2. En una TERMINAL SEPARADA (con el ambiente activado), correr el worker
 celery -A Bocar worker --loglevel=info
 ```
 
-### Celery Beat (tareas programadas)
+El worker debe mostrar `celery@<host> ready.`
 
-Necesario para la tarea que cierra automáticamente asignaciones vencidas:
-
-```bash
-celery -A Bocar beat --loglevel=info
-```
-
-### Documentación interactiva
-
-Con el servidor corriendo, acceder a:
-- Swagger UI: `http://localhost:8000/schema/swagger/`
-- ReDoc: `http://localhost:8000/schema/redoc/`
-- Panel de administración: `http://localhost:8000/admin/`
+> No se necesita Celery Beat — las asignaciones vencidas se cierran solas al consultarlas.
 
 ---
 
-## 6. Descripción de módulos
+## 10. Comandos frecuentes
 
-| Módulo | Descripción |
+| Quiero... | Comando |
 |---|---|
-| `Bocar/` | Configuración central del proyecto: settings, URLs principales, configuración de Celery. |
-| `users/` | Modelo de usuario personalizado con campo `role` e `is_admin`. Autenticación JWT en cookies HttpOnly. Endpoints de login, logout, refresh y perfil propio. |
-| `Industrializacion/` | Lógica del área de Industrialización: crear RFQs (Mold y Trimming), editarlos mientras están en estado `En_Ind`, enviarlos a Comercialización, y solicitar su regreso para edición. |
-| `Comercializacion/` | Lógica del área de Comercialización: ver todos los RFQs activos, asignar proveedores (transición a `En_Pro`), aprobar o rechazar solicitudes de edición, y resolver solicitudes de extensión de tiempo. |
-| `RFQ_Mold/` | Modelo de base de datos del RFQ tipo Mold y sus archivos adjuntos. Endpoints de solo lectura y borrado lógico. |
-| `RFQ_Trimming/` | Modelo de base de datos del RFQ tipo Trimming. Misma estructura que RFQ_Mold pero con campos propios del proceso de recorte. |
-| `Proveedores/` | Modelo del proveedor externo (empresa, país, rating). Endpoint de listado. |
-| `Asignaciones/` | Modelos de asignación de proveedores a RFQs. Endpoints para que los proveedores vean sus asignaciones, guarden borradores de respuesta, envíen cotizaciones definitivas y soliciten extensiones de tiempo. |
-| `Prov_RFQ_Mold/` | Modelo de cost breakdown que el proveedor completa para una asignación de tipo Mold. |
-| `Prov_RFQ_Trimming/` | Modelo de cost breakdown para asignaciones de tipo Trimming. |
-| `General_RFQs/` | Vistas transversales: conteo global de RFQs por estado, borrado lógico unificado y eliminación de borradores propios. |
-| `historial/` | Modelo de auditoría `RFQHistorial` y servicio `registrar_historial()`. Registra cada evento del ciclo de vida de un RFQ. Endpoint de consulta por tipo e ID de RFQ. |
-| `notificaciones/` | Tareas Celery que envían correos HTML a los destinatarios correspondientes en cada evento del flujo. No tiene endpoints propios. |
-| `chatbot/` | Endpoint de consulta en lenguaje natural. Verifica el rol del usuario, construye un contexto de acceso, llama al LLM dos veces (planificación e interpretación) y valida el acceso a datos con un doble guardrail antes de consultar la base de datos. |
+| Activar el ambiente | `venv\Scripts\activate` (Windows) o `source venv/bin/activate` |
+| Correr el servidor | `python manage.py runserver` |
+| Generar migraciones tras cambiar un modelo | `python manage.py makemigrations` |
+| Aplicar migraciones | `python manage.py migrate` |
+| Ver migraciones pendientes | `python manage.py showmigrations` |
+| Crear admin | `python manage.py createsuperuser` |
+| Actualizar dependencias tras un pull | `pip install -r requirements.txt` |
 
 ---
 
-## 7. Endpoints disponibles
+## 11. Problemas comunes
 
-### Autenticación — prefijo `/auth/`
-
-| Método | Ruta | Descripción |
+| Síntoma | Causa | Solución |
 |---|---|---|
-| `POST` | `/auth/login/` | Autentica al usuario con email y contraseña. Devuelve el access token y refresh token en cookies HttpOnly. |
-| `POST` | `/auth/logout/` | Cierra la sesión del usuario eliminando las cookies de autenticación. |
-| `POST` | `/auth/refresh/` | Emite un nuevo access token usando el refresh token almacenado en cookie. |
-| `GET` | `/auth/me/` | Devuelve los datos del usuario actualmente autenticado. |
+| `KeyError: 'DJANGO_SECRET_KEY'` | Falta el `.env` o la variable | Sección 5 |
+| `ModuleNotFoundError: No module named '...'` | Ambiente sin activar o dependencias sin instalar | Secciones 3 y 4 |
+| `no such table: ...` | Migraciones sin aplicar | `python manage.py migrate` |
+| `ConnectionRefusedError` en Celery | RabbitMQ apagado | Sección 9, o pon `NOTIFICATIONS_ENABLED=False` |
+| Los correos no llegan | Flag apagado o backend de consola | Activa `NOTIFICATIONS_ENABLED` y configura SMTP en el `.env` |
+| Error CORS en el navegador | Origen del frontend no permitido | Agrégalo a `CORS_ALLOWED_ORIGINS` en `settings.py` |
+| El chatbot da error | `GEMINI_API_KEY` faltante u Ollama apagado | Revisa las variables del chatbot (sección 5) |
+| `401` en todas las peticiones | Sin login o token expirado | `POST /auth/login/` o `POST /auth/refresh/` |
+| `429` al hacer login | Más de 5 intentos por minuto | Espera un minuto |
 
 ---
 
-### RFQ Mold — prefijo `/api_mold/v1/`
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api_mold/v1/rfq-molds/` | Lista todos los RFQ Mold activos con campos resumidos. |
-| `GET` | `/api_mold/v1/rfq-molds/<id>/` | Devuelve el detalle completo de un RFQ Mold por ID. |
-| `PATCH` | `/api_mold/v1/rfq-molds/<id>/delete/` | Aplica borrado lógico a un RFQ Mold. Solo administradores. |
-
----
-
-### RFQ Trimming — prefijo `/api_trimming/v1/`
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api_trimming/v1/rfq-trimmings/` | Lista todos los RFQ Trimming activos con campos resumidos. |
-| `GET` | `/api_trimming/v1/rfq-trimmings/<id>/` | Devuelve el detalle completo de un RFQ Trimming por ID. |
-| `PATCH` | `/api_trimming/v1/rfq-trimmings/<id>/delete/` | Aplica borrado lógico a un RFQ Trimming. Solo administradores. |
-
----
-
-### General — prefijo `/api_general/v1/`
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api_general/v1/rfq-count/` | Devuelve el conteo de RFQs (Mold + Trimming) agrupados por estado para el usuario autenticado. Acepta `?user_id=<id>` para consultar por otro usuario. |
-| `PATCH` | `/api_general/v1/rfq/<id>/delete/?tipo=mold\|trimming` | Borrado lógico unificado de un RFQ por tipo. |
-| `DELETE` | `/api_general/v1/rfq/<id>/borrador/?tipo=mold\|trimming` | Elimina físicamente un RFQ en estado `En_Ind` creado por el usuario autenticado. |
-
----
-
-### Proveedores — prefijo `/api_proveedores/v1/`
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api_proveedores/v1/proveedores/` | Lista todos los proveedores registrados en el sistema. |
-
----
-
-### Asignaciones — prefijo `/api_proveedores/v1/asginaciones/`
-
-> Nota: el prefijo contiene un error tipográfico (`asginaciones`) que se mantiene por compatibilidad.
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api_proveedores/v1/asginaciones/mis-asignaciones/` | Devuelve las asignaciones propias del proveedor autenticado, separadas en pendientes y contestadas. |
-| `GET` | `/api_proveedores/v1/asginaciones/detalle/<id>/?tipo=mold\|trimming` | Devuelve el detalle completo del RFQ asociado a una asignación específica. |
-| `POST` | `/api_proveedores/v1/asginaciones/responder/<id>/?tipo=mold\|trimming` | Guarda un borrador del cost breakdown para una asignación. No marca la asignación como respondida. |
-| `GET` | `/api_proveedores/v1/asginaciones/responder/<id>/detalle/?tipo=mold\|trimming` | Devuelve el borrador o la respuesta definitiva guardada para una asignación. |
-| `PATCH` | `/api_proveedores/v1/asginaciones/responder/<id>/actualizar/?tipo=mold\|trimming` | Actualiza el borrador del cost breakdown. Solo disponible si aún está en estado borrador. |
-| `POST` | `/api_proveedores/v1/asginaciones/responder/<id>/enviar/?tipo=mold\|trimming` | Convierte el borrador en respuesta definitiva y marca la asignación como respondida. |
-| `POST` | `/api_proveedores/v1/asginaciones/extension/solicitar/<id>/?tipo=mold\|trimming` | El proveedor solicita una extensión de plazo para responder una asignación. |
-| `PATCH` | `/api_proveedores/v1/asginaciones/extension/resolver/<id>/?tipo=mold\|trimming` | Comercialización aprueba o rechaza una solicitud de extensión de tiempo. |
-
----
-
-### Comercialización — prefijo `/api_comercializacion/v1/`
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api_comercializacion/v1/rfqs/` | Lista todos los RFQs activos (Mold y Trimming) con el progreso de respuesta de cada proveedor asignado. |
-| `GET` | `/api_comercializacion/v1/solicitudes/` | Lista las solicitudes pendientes de edición (de Industrialización) y las solicitudes de extensión de tiempo (de Proveedores). |
-| `POST` | `/api_comercializacion/v1/asignaciones/crear/?tipo=mold\|trimming` | Asigna uno o varios proveedores a un RFQ y lo mueve al estado `En_Pro`. Ignora asignaciones duplicadas. |
-| `PATCH` | `/api_comercializacion/v1/edit-requests/<id>/aprobar/?tipo=mold\|trimming` | Aprueba una solicitud de edición, regresando el RFQ al estado `En_Ind`. |
-| `PATCH` | `/api_comercializacion/v1/edit-requests/<id>/rechazar/?tipo=mold\|trimming` | Rechaza una solicitud de edición, manteniendo el RFQ en `En_Com`. |
-| `PATCH` | `/api_comercializacion/v1/extension/<id>/resolver/?tipo=mold\|trimming` | Aprueba o rechaza una solicitud de extensión de tiempo de un proveedor. |
-
----
-
-### Industrialización — prefijo `/api_industrializacion/v1/`
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api_industrializacion/v1/rfqs/` | Lista los RFQs del área: borradores propios (En_Ind) y todos los demás estados. |
-| `POST` | `/api_industrializacion/v1/rfq/?tipo=mold\|trimming` | Crea un nuevo RFQ del tipo indicado. Acepta archivos adjuntos como `multipart/form-data`. |
-| `PATCH` | `/api_industrializacion/v1/rfq/<id>/?tipo=mold\|trimming` | Edita un RFQ existente. Solo disponible mientras el RFQ esté en estado `En_Ind`. |
-| `POST` | `/api_industrializacion/v1/rfq/<id>/enviar/?tipo=mold\|trimming` | Envía el RFQ a Comercialización, cambiando su estado de `En_Ind` a `En_Com`. |
-| `POST` | `/api_industrializacion/v1/edit-requests/?tipo=mold\|trimming` | Solicita regresar un RFQ de `En_Com` a `En_Ind` para hacer correcciones. |
-
----
-
-### Historial — prefijo `/api_historial/v1/`
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api_historial/v1/<tipo>/<rfq_id>/` | Devuelve el historial completo de eventos de un RFQ. `tipo` puede ser `mold` o `trimming`. |
-
----
-
-### Chatbot — prefijo `/api_chatbot/v1/`
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `POST` | `/api_chatbot/v1/query/` | Recibe una pregunta en lenguaje natural y devuelve una respuesta basada en los datos accesibles según el rol del usuario autenticado. Acepta historial de conversación opcional. |
-
----
-
-### Documentación y esquema
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/schema/swagger/` | Interfaz Swagger UI con todos los endpoints documentados y formularios de prueba interactivos. |
-| `GET` | `/schema/redoc/` | Documentación ReDoc — alternativa más legible a Swagger. |
-| `GET` | `/api/schema/` | Esquema OpenAPI en formato YAML/JSON para herramientas externas. |
-| `GET` | `/admin/` | Panel de administración de Django. Requiere cuenta con `is_staff=True`. |
+> **¿Buscas la lista de endpoints?** → [endpoints.md](endpoints.md) o Swagger (`/schema/swagger/`)
+> **¿Buscas la arquitectura, módulos y diseño?** → [documentacion_tecnica.md](documentacion_tecnica.md)
+> **¿Buscas el flujo de negocio (RFQs, roles)?** → [flujo_completo.md](flujo_completo.md)

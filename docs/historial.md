@@ -67,6 +67,7 @@ La respuesta viene paginada con el formato `{count, next, previous, results}`.
 | `EXTENSION_APROBADA` | Al aprobar la extensión |
 | `EXTENSION_RECHAZADA` | Al rechazar la extensión |
 | `EVALUACION_PROVEEDOR` | Al registrar una evaluación de proveedor por Compras |
+| `CIERRE_RFQ` | Al cerrar formalmente un RFQ (Comercialización registra el motivo) |
 
 ---
 
