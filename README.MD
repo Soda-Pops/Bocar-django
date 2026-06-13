@@ -1,14 +1,41 @@
 # **BOCAR DJANGO**
 
+## **Cómo ejecutar el proyecto**
+
+> Versión rápida. La guía completa paso a paso está en [docs/Guia_Usuario.md](docs/Guia_Usuario.md).
+
+```bash
+# 1. Clonar y entrar al proyecto
+git clone <url-del-repositorio>
+cd Bocar-django
+
+# 2. Crear y activar el ambiente virtual
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+source .venv/bin/activate       # macOS / Linux
+
+# 3. Instalar dependencias
+pip install -r requirements.txt
+
+# 4. Configurar variables de entorno
+cp .env.example .env            # En PowerShell: Copy-Item .env.example .env
+# Editar .env y poner una DJANGO_SECRET_KEY (sin ella el servidor no arranca)
+
+# 5. Aplicar migraciones y crear el usuario administrador
+python manage.py migrate
+python manage.py createsuperuser
+
+# 6. Correr el servidor
+python manage.py runserver
+```
+
+El proyecto queda en `http://localhost:8000` — Swagger en [/schema/swagger/](http://127.0.0.1:8000/schema/swagger/) y panel admin en [/admin/](http://127.0.0.1:8000/admin/).
+
 ## **Avisos importantes**
 
 >[!NOTE]
 >
 > Por cuestiones de facilidad al desarrollar he decido dejar la configuracion par ahacer un archivo ``.sqlite3``, no afecta nada en diseño, en cuanto se cambien `settings.py` a una instacia de mysql todo seguira funcionando normal
-
->[!NOTE]
->
-> Queda pendiente reincoorporar archivo ``environmente.yml`` para ambiente virtual
 
 >[!NOTE]
 >
@@ -23,7 +50,7 @@ Hemos implentado **Swagger** como medio estandar de documetacion de **APIs**, as
 
 
 ### **Admin panel**
-[http://127.0.0.1:8000/schema/swagger/](http://127.0.0.1:8000/schema/swagger/)
+[http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
 
 >[!IMPORTANT]
 >
@@ -117,5 +144,19 @@ Cubre (19 tests, sin broker requerido):
   - `Industrializacion` enviar a Comercialización → `notificar_comercializacion`
   - `Comercializacion` crear asignaciones → `notificar_proveedores`
   - `Asignaciones` enviar respuesta → `notificar_cotizacion_recibida`
+
+---
+
+## **Documentación**
+
+| Documento | Contenido |
+|---|---|
+| [docs/Guia_Usuario.md](docs/Guia_Usuario.md) | Guía paso a paso para correr el proyecto |
+| [docs/documentacion_tecnica.md](docs/documentacion_tecnica.md) | Arquitectura, módulos, stack con versiones, pruebas |
+| [docs/endpoints.md](docs/endpoints.md) | Lista completa de endpoints con descripciones |
+| [docs/flujo_completo.md](docs/flujo_completo.md) | Flujo de negocio end-to-end (RFQs, roles) |
+| [docs/evaluacion_proveedores.md](docs/evaluacion_proveedores.md) | Módulo de evaluación de proveedores |
+| [docs/historial.md](docs/historial.md) | Módulo de auditoría / historial |
+| [docs/security.md](docs/security.md) | Issues de seguridad pendientes |
 
 

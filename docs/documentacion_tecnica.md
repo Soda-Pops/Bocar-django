@@ -339,7 +339,7 @@ Todos los endpoints siguen la convención:
 - **Autenticación:** JWT en cookie HttpOnly (`access_token`). Sin este cookie, el servidor devuelve `401 Unauthorized`.
 - **Parámetro de tipo:** Muchos endpoints requieren `?tipo=mold|trimming` como query parameter para operar sobre el modelo correcto.
 
-La lista completa de endpoints con descripciones está en la [Guía de Usuario, sección 6](Guia_Usuario.md#6-referencia-de-endpoints). La documentación interactiva está disponible en:
+La lista completa de endpoints con descripciones está en [endpoints.md](endpoints.md). La documentación interactiva está disponible en:
 - Swagger UI: `GET /schema/swagger/`
 - ReDoc: `GET /schema/redoc/`
 
