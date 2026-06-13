@@ -9,13 +9,7 @@
 git clone <url-del-repositorio>
 cd Bocar-django
 
-# 2. Crear y activar el ambiente virtual
-
-#    Opción A — con Conda:
-conda create -n bocar_django python=3.14 -y
-conda activate bocar_django
-
-#    Opción B — con virtualenv:
+# 2. Crear y activar el ambiente virtual (con virtualenv)
 pip install virtualenv          # solo si aún no lo tienes
 virtualenv venv
 venv\Scripts\activate           # Windows

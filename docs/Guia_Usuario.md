@@ -26,7 +26,7 @@
 
 - Python 3.14+ → verificar con `python --version`
 - Git
-- Conda **o** `virtualenv` (`pip install virtualenv`)
+- `virtualenv` (`pip install virtualenv`)
 - (Opcional) Docker — solo si vas a activar las notificaciones por correo
 
 ---
@@ -42,15 +42,6 @@ cd Bocar-django
 
 ## 3. Crear y activar el ambiente virtual
 
-**Opción A — Conda:**
-
-```bash
-conda create -n bocar_django python=3.14 -y
-conda activate bocar_django
-```
-
-**Opción B — virtualenv:**
-
 ```bash
 # Instalar virtualenv (solo la primera vez)
 pip install virtualenv
@@ -65,9 +56,9 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-El prompt debe mostrar el prefijo `(bocar_django)` o `(venv)`.
+El prompt debe mostrar el prefijo `(venv)`.
 
-> Para salir del ambiente cuando termines: `conda deactivate` o `deactivate`.
+> Para salir del ambiente cuando termines: `deactivate`.
 
 ---
 
@@ -185,7 +176,7 @@ El worker debe mostrar `celery@<host> ready.`
 
 | Quiero... | Comando |
 |---|---|
-| Activar el ambiente | `conda activate bocar_django` o `venv\Scripts\activate` |
+| Activar el ambiente | `venv\Scripts\activate` (Windows) o `source venv/bin/activate` |
 | Correr el servidor | `python manage.py runserver` |
 | Generar migraciones tras cambiar un modelo | `python manage.py makemigrations` |
 | Aplicar migraciones | `python manage.py migrate` |
