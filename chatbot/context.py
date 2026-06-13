@@ -44,26 +44,52 @@ TOOLS_PRO = {
     },
 }
 
+TOOLS_COM_ADMIN = {
+    **TOOLS_COM,
+    'contar_rfqs_eliminados': {
+        'descripcion': 'Cuenta los RFQs eliminados del sistema.',
+        'params':      {'tipo': 'mold|trimming|ambos'},
+    },
+}
+
 _ROLE_DESCRIPTIONS = {
-    'Ind': 'Industrialización — solo puede consultar sus propios RFQs',
-    'Com': 'Comercialización — acceso completo a RFQs, asignaciones y proveedores',
-    'Pro': 'Proveedor — solo puede consultar sus propias asignaciones',
+    'Ind':       'Industrialización — solo puede consultar sus propios RFQs',
+    'Ind_admin': 'Industrialización Super User — acceso completo a todos los RFQs',
+    'Com':       'Comercialización — acceso completo a RFQs, asignaciones y proveedores',
+    'Com_admin': 'Comercialización Super User — acceso completo incluyendo RFQs eliminados',
+    'Pro':       'Proveedor — solo puede consultar sus propias asignaciones',
 }
 
 
-def get_tools_for_role(role: str) -> dict:
-    return {'Ind': TOOLS_IND, 'Com': TOOLS_COM, 'Pro': TOOLS_PRO}.get(role, {})
+def get_tools_for_role(role: str, is_admin: bool = False) -> dict:
+    if role == 'Ind':
+        return TOOLS_COM if is_admin else TOOLS_IND
+    if role == 'Com':
+        return TOOLS_COM_ADMIN if is_admin else TOOLS_COM
+    if role == 'Pro':
+        return TOOLS_PRO
+    return {}
+
+
+def _get_status_mapping() -> str:
+    from RFQ_Mold.models import RFQ_Mold
+    lines = []
+    for value, label in RFQ_Mold.Status.choices:
+        lines.append(f'- "{label.lower()}" / "{value.lower()}" → {value}')
+    return '\n'.join(lines)
 
 
 def build_system_prompt(user) -> str:
-    tools = get_tools_for_role(user.role)
+    tools = get_tools_for_role(user.role, user.is_admin)
 
     tools_str = ''
     for name, meta in tools.items():
         params_str = ', '.join(f'{k}: {v}' for k, v in meta['params'].items()) or 'sin parámetros'
         tools_str += f'\n- {name}({params_str}): {meta["descripcion"]}'
 
-    role_desc = _ROLE_DESCRIPTIONS.get(user.role, user.role)
+    role_key = f'{user.role}_admin' if user.is_admin else user.role
+    role_desc = _ROLE_DESCRIPTIONS.get(role_key, user.role)
+    status_mapping = _get_status_mapping()
 
     return f"""You are a query assistant for the Bocar RFQ (Request for Quotation) management system.
 Always respond in English, regardless of the language the user writes in.
@@ -73,9 +99,10 @@ Current user: {user.username} (role: {role_desc})
 AVAILABLE TOOLS for this user:{tools_str}
 
 STATUS MAPPING (always translate before using the status parameter):
+{status_mapping}
 - "draft" / "drafts" / "in industrialization" → En_Ind
 - "awaiting authorization" / "under review" / "in commercialization" → En_Com
-- "active" / "quoting" / "quoting process" / "in supplier" → En_Pro
+- "active" / "quoting" / "quoting process" / "with supplier" / "in supplier" → En_Pro
 
 INSTRUCTIONS:
 Analyze the question and respond ONLY with a valid JSON in one of these three formats:

@@ -545,7 +545,14 @@ class AsignacionEnviarRespuestaView(APIView):
                 return Response({'detail': 'Esta respuesta ya fue enviada.'}, status=status.HTTP_409_CONFLICT)
             breakdown.status = Cost_Breakdown_Mold.Status.SUBMITTED
             breakdown.last_edited_by = request.user
-            breakdown.save(update_fields=['status', 'last_edited_by'])
+            ctbd = breakdown.ctbd or {}
+            breakdown.grand_total_sum = (
+                ctbd.get('m1_gr_tot_pr') or
+                ctbd.get('tool_rep_gr_tot_pr') or
+                ctbd.get('set_of_cav_gr_tot_pr') or
+                0.0
+            )
+            breakdown.save(update_fields=['status', 'last_edited_by', 'grand_total_sum'])
             rfq = asignacion.id_RFQ_Mold
         else:
             asignacion = _get_asignacion_trimming(id_asignacion, proveedor)
@@ -561,7 +568,13 @@ class AsignacionEnviarRespuestaView(APIView):
                 return Response({'detail': 'Esta respuesta ya fue enviada.'}, status=status.HTTP_409_CONFLICT)
             breakdown.status = Cost_Breakdown_Trimming.Status.SUBMITTED
             breakdown.last_edited_by = request.user
-            breakdown.save(update_fields=['status', 'last_edited_by'])
+            ctbd = breakdown.ctbd or {}
+            breakdown.manuf_grand_total_sum = (
+                ctbd.get('trim_die_1_gr_tot_pr') or
+                ctbd.get('trim_die_2_gr_tot_pr') or
+                0.0
+            )
+            breakdown.save(update_fields=['status', 'last_edited_by', 'manuf_grand_total_sum'])
             rfq = asignacion.id_RFQ_Trimming
 
         mark_assignment_answered_and_closed(asignacion)

@@ -107,6 +107,18 @@ def historial_rfq(user, tipo: str, rfq_id: int) -> dict:
 # Com — acceso global a todos los RFQs, asignaciones y proveedores
 # ─────────────────────────────────────────────────────────────────────────────
 
+def contar_rfqs_eliminados(tipo: str = 'ambos') -> dict:
+    counts = {}
+    for t, model in _rfq_models(tipo):
+        counts[t] = model.objects.filter(logical_delete=True).count()
+    result = {**counts, 'tipo': tipo}
+    if tipo == 'ambos':
+        result['total'] = sum(counts.values())
+    else:
+        result['count'] = counts[tipo]
+    return result
+
+
 def contar_rfqs_todos(tipo: str = 'ambos', status: str = None) -> dict:
     counts = {}
     for t, model in _rfq_models(tipo):
